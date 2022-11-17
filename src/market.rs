@@ -1,3 +1,4 @@
+use crate::enums::Side;
 use borsh::{BorshDeserialize, BorshSerialize};
 use bytemuck::{Pod, Zeroable};
 use sokoban::node_allocator::{NodeAllocatorMap, OrderedNodeAllocatorMap, ZeroCopy, SENTINEL};
@@ -170,28 +171,6 @@ pub struct Seat {
 }
 
 impl ZeroCopy for Seat {}
-
-#[derive(BorshDeserialize, BorshSerialize, Copy, Clone, PartialEq, Eq, Debug)]
-pub enum Side {
-    Bid,
-    Ask,
-}
-
-impl Side {
-    pub fn opposite(&self) -> Self {
-        match *self {
-            Side::Bid => Side::Ask,
-            Side::Ask => Side::Bid,
-        }
-    }
-
-    pub fn from_order_sequence_number(order_id: u64) -> Self {
-        match order_id.leading_zeros() {
-            0 => Side::Bid,
-            _ => Side::Ask,
-        }
-    }
-}
 
 #[repr(C)]
 #[derive(Eq, PartialEq, Debug, Default, Copy, Clone, Zeroable, Pod)]

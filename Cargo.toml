@@ -1,6 +1,6 @@
 [package]
 name = "phoenix-types"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "Lightweight interface for interacting with the Solana blockchain"
 license = "MIT OR Apache-2.0"
@@ -13,3 +13,6 @@ bytemuck = "1.11.0"
 thiserror = "^1.0.24"
 solana-sdk = "1.10.32"
 borsh = "0.9.3"
+spl-token = { version = "3.2.0", features = ["no-entrypoint"] }
+spl-associated-token-account = { version = "1.1.1", features = [ "no-entrypoint" ] }
+spl-noop = { version = "=0.1.0", features = [ "no-entrypoint" ] }
