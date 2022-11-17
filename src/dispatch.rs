@@ -15,20 +15,12 @@ pub fn load_with_dispatch_mut<'a>(
     header: &'a MarketParams,
     bytes: &'a mut [u8],
 ) -> Option<MarketWrapper> {
-    dispatch_market_mut(header, bytes, false)
-}
-
-pub fn load_with_dispatch_init<'a>(
-    header: &'a MarketParams,
-    bytes: &'a mut [u8],
-) -> Option<MarketWrapper> {
-    dispatch_market_mut(header, bytes, true)
+    dispatch_market_mut(header, bytes)
 }
 
 pub fn dispatch_market_mut<'a>(
     header: &'a MarketParams,
     bytes: &'a mut [u8],
-    is_initial: bool,
 ) -> Option<MarketWrapper> {
     let market = match (header.bids_size, header.asks_size, header.num_seats) {
         (512, 512, 256) => FIFOMarket::<512, 512, 256>::load_mut_bytes(bytes)? as &mut dyn Market,
