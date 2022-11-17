@@ -1,6 +1,7 @@
 use crate::enums::{SelfTradeBehavior, Side};
 use borsh::{BorshDeserialize, BorshSerialize};
 
+/// An enum representing a new order.
 #[derive(BorshDeserialize, BorshSerialize, Copy, Clone, PartialEq, Eq, Debug)]
 pub enum OrderPacket {
     /// This order type is used to place a limit order on the book.
