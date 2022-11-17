@@ -131,13 +131,14 @@ impl OrderPacket {
         side: Side,
         price_in_ticks: u64,
         num_base_lots: u64,
+        client_order_id: u128,
         reject_post_only: bool,
     ) -> Self {
         Self::PostOnly {
             side,
             num_quote_ticks_per_base_unit: price_in_ticks,
             num_base_lots,
-            client_order_id: 0,
+            client_order_id,
             reject_post_only,
         }
     }

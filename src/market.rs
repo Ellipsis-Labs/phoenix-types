@@ -82,6 +82,28 @@ pub struct MarketHeader {
 }
 impl ZeroCopy for MarketHeader {}
 
+impl MarketHeader {
+    pub fn price_in_ticks(&self, price: u64) -> u64 {
+        price / self.tick_size
+    }
+
+    pub fn get_base_lot_size(&self) -> u64 {
+        self.base_lot_size
+    }
+
+    pub fn get_quote_lot_size(&self) -> u64 {
+        self.quote_lot_size
+    }
+
+    pub fn get_tick_size(&self) -> u64 {
+        self.tick_size
+    }
+
+    pub fn increment_sequence_number(&mut self) {
+        self.sequence_number += 1;
+    }
+}
+
 #[repr(C)]
 #[derive(Default, Copy, Clone, Zeroable)]
 pub struct FIFOMarket<const BIDS_SIZE: usize, const ASKS_SIZE: usize, const NUM_SEATS: usize> {
