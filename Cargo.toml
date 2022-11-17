@@ -7,6 +7,9 @@ license = "MIT OR Apache-2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+pyo3 = ["dep:pyo3"]
+
 [dependencies]
 lib-sokoban = "0.1.13" 
 bytemuck = "1.11.0"
@@ -16,3 +19,4 @@ borsh = "0.9.3"
 spl-token = { version = "3.2.0", features = ["no-entrypoint"] }
 spl-associated-token-account = { version = "1.1.1", features = [ "no-entrypoint" ] }
 spl-noop = { version = "=0.1.0", features = [ "no-entrypoint" ] }
+pyo3 = { version = "0.17.3", features = ["extension-module", "abi3-py37"], optional = true }
