@@ -53,6 +53,11 @@ pub trait Market {
         Ladder { bids, asks }
     }
 
+    fn get_registered_traders(&self) -> &dyn OrderedNodeAllocatorMap<Pubkey, TraderState>;
+
+    fn get_quote_lots_per_tick(&self) -> u64;
+    fn get_base_lots_per_base_unit(&self) -> u64;
+
     fn get_trader_address(&self, trader: &Pubkey) -> Option<u32>;
 
     fn get_trader_state(&self, trader: &Pubkey) -> Option<&TraderState>;
@@ -169,6 +174,18 @@ impl<const BIDS_SIZE: usize, const ASKS_SIZE: usize, const NUM_SEATS: usize> Mar
             Side::Bid => &self.bids as &dyn OrderedNodeAllocatorMap<FIFOOrderId, FIFORestingOrder>,
             Side::Ask => &self.asks as &dyn OrderedNodeAllocatorMap<FIFOOrderId, FIFORestingOrder>,
         }
+    }
+
+    fn get_base_lots_per_base_unit(&self) -> u64 {
+        self.base_lots_per_base_unit
+    }
+
+    fn get_quote_lots_per_tick(&self) -> u64 {
+        self.quote_lots_per_tick
+    }
+
+    fn get_registered_traders(&self) -> &dyn OrderedNodeAllocatorMap<Pubkey, TraderState> {
+        &self.traders as &dyn OrderedNodeAllocatorMap<Pubkey, TraderState>
     }
 }
 
