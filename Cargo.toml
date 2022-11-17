@@ -2,14 +2,14 @@
 name = "phoenix-types"
 version = "0.1.0"
 edition = "2021"
+description = "Lightweight interface for interacting with the Solana blockchain"
+license = "MIT OR Apache-2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 lib-sokoban = "0.1.13" 
 bytemuck = "1.11.0"
-num_enum = "^0.5.1"
 thiserror = "^1.0.24"
 solana-sdk = "1.10.32"
 borsh = "0.9.3"
-spl-noop = { version = "=0.1.0", features = [ "no-entrypoint" ] }
