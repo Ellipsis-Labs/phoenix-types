@@ -91,7 +91,7 @@ impl OrderPacket {
         Self::PostOnly {
             side,
             num_quote_ticks_per_base_unit: price_in_ticks,
-            num_base_lots: num_base_lots,
+            num_base_lots,
             client_order_id: 0,
             reject_post_only: true,
         }
@@ -106,7 +106,7 @@ impl OrderPacket {
         Self::PostOnly {
             side,
             num_quote_ticks_per_base_unit: price_in_ticks,
-            num_base_lots: num_base_lots,
+            num_base_lots,
             client_order_id,
             reject_post_only: true,
         }
@@ -121,7 +121,7 @@ impl OrderPacket {
         Self::PostOnly {
             side,
             num_quote_ticks_per_base_unit: price_in_ticks,
-            num_base_lots: num_base_lots,
+            num_base_lots,
             client_order_id,
             reject_post_only: false,
         }
@@ -136,7 +136,7 @@ impl OrderPacket {
         Self::PostOnly {
             side,
             num_quote_ticks_per_base_unit: price_in_ticks,
-            num_base_lots: num_base_lots,
+            num_base_lots,
             client_order_id: 0,
             reject_post_only,
         }
@@ -180,7 +180,7 @@ impl OrderPacket {
         Self::Limit {
             side,
             num_quote_ticks_per_base_unit: price_in_ticks,
-            num_base_lots: num_base_lots,
+            num_base_lots,
             self_trade_behavior,
             match_limit,
             client_order_id,
@@ -395,10 +395,10 @@ impl OrderPacket {
         Self::ImmediateOrCancel {
             side,
             num_quote_ticks_per_base_unit: price_in_ticks,
-            num_base_lots: num_base_lots,
-            num_quote_lots: num_quote_lots,
-            min_base_lots_to_fill: min_base_lots_to_fill,
-            min_quote_lots_to_fill: min_quote_lots_to_fill,
+            num_base_lots,
+            num_quote_lots,
+            min_base_lots_to_fill,
+            min_quote_lots_to_fill,
             self_trade_behavior,
             match_limit,
             client_order_id,

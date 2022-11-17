@@ -18,63 +18,8 @@ pub struct Ladder {
     pub asks: Vec<LadderOrder>,
 }
 
-#[derive(Debug, Clone, Copy, BorshDeserialize, BorshSerialize, Zeroable, Pod)]
-#[repr(C)]
-pub struct MarketHeader {
-    pub discriminant: u64,
-    pub status: u64,
-    pub params: MarketParams,
-    pub base_params: TokenParams,
-    base_lot_size: u64,
-    pub quote_params: TokenParams,
-    quote_lot_size: u64,
-    tick_size: u64,
-    pub authority: Pubkey,
-    pub sequence_number: u64,
-    _padding1: u64,
-    _padding2: u64,
-    _padding3: u64,
-    _padding4: u64,
-    _padding5: u64,
-    _padding6: u64,
-}
-impl ZeroCopy for MarketHeader {}
-
-#[repr(C)]
-#[derive(Default, Copy, Clone, Zeroable)]
-pub struct Market<const BIDS_SIZE: usize, const ASKS_SIZE: usize, const NUM_SEATS: usize> {
-    /// Number of base lots in a base unit. For example, if the lot size is 0.001 SOL, then base_lots_per_unit is 1000.
-    pub base_lots_per_base_unit: u64,
-
-    /// Tick size in terms of quote lots. For example, if the tick size is 0.01 USDC and the quote lot size is 0.001 USDC, then quote_lots_per_tick is 10.
-    pub quote_lots_per_tick: u64,
-
-    /// The sequence number of the next event.
-    order_sequence_number: u64,
-
-    /// There are no maker fees. Taker fees are charged on the amount of the trade in basis points.
-    pub taker_fee_bps: u64,
-
-    /// Amount of fees collected from the market in its lifetime, in adjusted quote lots. Adjusted quote lots = quote lots * base lots per base unit.
-    collected_adjusted_quote_lot_fees: u64,
-
-    /// Amount of unclaimed fees accrued to the market, in adjusted quote lots. Adjusted quote lots = quote lots * base lots per base unit.
-    unclaimed_adjusted_quote_lot_fees: u64,
-
-    /// Red-black tree representing the bids in the order book.
-    pub bids: RedBlackTree<FIFOOrderId, FIFORestingOrder, BIDS_SIZE>,
-
-    /// Red-black tree representing the asks in the order book.
-    pub asks: RedBlackTree<FIFOOrderId, FIFORestingOrder, ASKS_SIZE>,
-
-    /// Red-black tree representing the authorized makers in the market.
-    pub traders: RedBlackTree<Pubkey, TraderState, NUM_SEATS>,
-}
-
-impl<const BIDS_SIZE: usize, const ASKS_SIZE: usize, const NUM_SEATS: usize>
-    Market<BIDS_SIZE, ASKS_SIZE, NUM_SEATS>
-{
-    pub fn get_ladder(&self, levels: u64) -> Ladder {
+pub trait Market {
+    fn get_ladder(&self, levels: u64) -> Ladder {
         let mut bids = vec![];
         let mut asks = vec![];
         if levels == 0 {
@@ -108,8 +53,81 @@ impl<const BIDS_SIZE: usize, const ASKS_SIZE: usize, const NUM_SEATS: usize>
         Ladder { bids, asks }
     }
 
+    fn get_trader_address(&self, trader: &Pubkey) -> Option<u32>;
+
+    fn get_trader_state(&self, trader: &Pubkey) -> Option<&TraderState>;
+
+    fn get_book(&self, side: Side) -> &dyn OrderedNodeAllocatorMap<FIFOOrderId, FIFORestingOrder>;
+}
+
+#[derive(Debug, Clone, Copy, BorshDeserialize, BorshSerialize, Zeroable, Pod)]
+#[repr(C)]
+pub struct MarketHeader {
+    pub discriminant: u64,
+    pub status: u64,
+    pub params: MarketParams,
+    pub base_params: TokenParams,
+    base_lot_size: u64,
+    pub quote_params: TokenParams,
+    quote_lot_size: u64,
+    tick_size: u64,
+    pub authority: Pubkey,
+    pub sequence_number: u64,
+    _padding1: u64,
+    _padding2: u64,
+    _padding3: u64,
+    _padding4: u64,
+    _padding5: u64,
+    _padding6: u64,
+}
+impl ZeroCopy for MarketHeader {}
+
+#[repr(C)]
+#[derive(Default, Copy, Clone, Zeroable)]
+pub struct FIFOMarket<const BIDS_SIZE: usize, const ASKS_SIZE: usize, const NUM_SEATS: usize> {
+    /// Number of base lots in a base unit. For example, if the lot size is 0.001 SOL, then base_lots_per_unit is 1000.
+    pub base_lots_per_base_unit: u64,
+
+    /// Tick size in terms of quote lots. For example, if the tick size is 0.01 USDC and the quote lot size is 0.001 USDC, then quote_lots_per_tick is 10.
+    pub quote_lots_per_tick: u64,
+
+    /// The sequence number of the next event.
+    order_sequence_number: u64,
+
+    /// There are no maker fees. Taker fees are charged on the amount of the trade in basis points.
+    pub taker_fee_bps: u64,
+
+    /// Amount of fees collected from the market in its lifetime, in adjusted quote lots. Adjusted quote lots = quote lots * base lots per base unit.
+    collected_adjusted_quote_lot_fees: u64,
+
+    /// Amount of unclaimed fees accrued to the market, in adjusted quote lots. Adjusted quote lots = quote lots * base lots per base unit.
+    unclaimed_adjusted_quote_lot_fees: u64,
+
+    /// Red-black tree representing the bids in the order book.
+    pub bids: RedBlackTree<FIFOOrderId, FIFORestingOrder, BIDS_SIZE>,
+
+    /// Red-black tree representing the asks in the order book.
+    pub asks: RedBlackTree<FIFOOrderId, FIFORestingOrder, ASKS_SIZE>,
+
+    /// Red-black tree representing the authorized makers in the market.
+    pub traders: RedBlackTree<Pubkey, TraderState, NUM_SEATS>,
+}
+
+unsafe impl<const BIDS_SIZE: usize, const ASKS_SIZE: usize, const NUM_SEATS: usize> Pod
+    for FIFOMarket<BIDS_SIZE, ASKS_SIZE, NUM_SEATS>
+{
+}
+
+impl<const BIDS_SIZE: usize, const ASKS_SIZE: usize, const NUM_SEATS: usize> ZeroCopy
+    for FIFOMarket<BIDS_SIZE, ASKS_SIZE, NUM_SEATS>
+{
+}
+
+impl<const BIDS_SIZE: usize, const ASKS_SIZE: usize, const NUM_SEATS: usize> Market
+    for FIFOMarket<BIDS_SIZE, ASKS_SIZE, NUM_SEATS>
+{
     #[inline(always)]
-    pub fn get_trader_address(&self, trader: &Pubkey) -> Option<u32> {
+    fn get_trader_address(&self, trader: &Pubkey) -> Option<u32> {
         let addr = self.traders.get_addr(trader);
         if addr == SENTINEL {
             None
@@ -119,15 +137,12 @@ impl<const BIDS_SIZE: usize, const ASKS_SIZE: usize, const NUM_SEATS: usize>
     }
 
     #[inline(always)]
-    pub fn get_trader_state(&self, trader: &Pubkey) -> Option<&TraderState> {
+    fn get_trader_state(&self, trader: &Pubkey) -> Option<&TraderState> {
         self.traders.get(trader)
     }
 
     #[inline(always)]
-    pub fn get_book(
-        &self,
-        side: Side,
-    ) -> &dyn OrderedNodeAllocatorMap<FIFOOrderId, FIFORestingOrder> {
+    fn get_book(&self, side: Side) -> &dyn OrderedNodeAllocatorMap<FIFOOrderId, FIFORestingOrder> {
         match side {
             Side::Bid => &self.bids as &dyn OrderedNodeAllocatorMap<FIFOOrderId, FIFORestingOrder>,
             Side::Ask => &self.asks as &dyn OrderedNodeAllocatorMap<FIFOOrderId, FIFORestingOrder>,
