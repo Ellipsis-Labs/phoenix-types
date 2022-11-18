@@ -96,6 +96,80 @@ pub struct DepositParams {
     pub base_lots: u64,
 }
 
+pub fn create_new_order_instruction(
+    market: &Pubkey,
+    trader: &Pubkey,
+    base: &Pubkey,
+    quote: &Pubkey,
+    order_type: &OrderPacket,
+) -> Instruction {
+    let base_account = get_associated_token_address(trader, base);
+    let quote_account = get_associated_token_address(trader, quote);
+    create_new_order_instruction_with_custom_token_accounts(
+        market,
+        trader,
+        &base_account,
+        &quote_account,
+        base,
+        quote,
+        order_type,
+    )
+}
+
+pub fn create_new_order_instruction_with_custom_token_accounts(
+    market: &Pubkey,
+    trader: &Pubkey,
+    base_account: &Pubkey,
+    quote_account: &Pubkey,
+    base: &Pubkey,
+    quote: &Pubkey,
+    order_type: &OrderPacket,
+) -> Instruction {
+    let (base_vault, _) = get_vault_address(market, base);
+    let (quote_vault, _) = get_vault_address(market, quote);
+    if order_type.is_take_only() {
+        Instruction {
+            program_id: crate::id(),
+            accounts: vec![
+                AccountMeta::new(*market, false),
+                AccountMeta::new(*trader, true),
+                AccountMeta::new_readonly(spl_noop::id(), false),
+                AccountMeta::new(*base_account, false),
+                AccountMeta::new(*quote_account, false),
+                AccountMeta::new(base_vault, false),
+                AccountMeta::new(quote_vault, false),
+                AccountMeta::new_readonly(spl_token::id(), false),
+            ],
+            data: [
+                PhoenixInstruction::Swap.try_to_vec().unwrap(),
+                order_type.try_to_vec().unwrap(),
+            ]
+            .concat(),
+        }
+    } else {
+        let (seat, _) = get_seat_address(market, trader);
+        Instruction {
+            program_id: crate::id(),
+            accounts: vec![
+                AccountMeta::new(*market, false),
+                AccountMeta::new(*trader, true),
+                AccountMeta::new_readonly(spl_noop::id(), false),
+                AccountMeta::new_readonly(seat, false),
+                AccountMeta::new(*base_account, false),
+                AccountMeta::new(*quote_account, false),
+                AccountMeta::new(base_vault, false),
+                AccountMeta::new(quote_vault, false),
+                AccountMeta::new_readonly(spl_token::id(), false),
+            ],
+            data: [
+                PhoenixInstruction::PlaceLimitOrder.try_to_vec().unwrap(),
+                order_type.try_to_vec().unwrap(),
+            ]
+            .concat(),
+        }
+    }
+}
+
 pub fn create_new_order_with_free_funds_instruction(
     market: &Pubkey,
     trader: &Pubkey,
