@@ -20,31 +20,43 @@ pub fn get_seat_address(market: &Pubkey, trader: &Pubkey) -> (Pubkey, u8) {
 #[rustfmt::skip]
 pub enum PhoenixInstruction {
     Instruction0,
-    /// Send a swap (no limit orders allowed) order
+
+    /// Send a swap (cross) order
     Swap,
+
     /// Place a limit order on the book. The order can cross if the supplied order type is Limit
     PlaceLimitOrder,
+
     /// Reduce the size of an existing order on the book 
     ReduceOrder,
-    /// Remove all orders from the book
+
+    /// Cancel all of a user's orders from the book
     CancelAllOrders,
-    /// Remove multiple orders from the book based off a price
+
+    /// Cancel multiple orders from the book based off a price
     CancelMultipleOrders,
+
     Instruction6,
+
     /// Remove multiple orders from the book based off id
     CancelMultipleOrdersById,
+
     /// Withdraw funds from the vault 
     WithdrawFunds,
+
     /// Deposit funds into the vault 
     DepositFunds,
+
     Instruction10,
     Instruction11,
     Instruction12,
     Instruction13,
     Instruction14,
     Instruction15,
+
     /// Request a seat on the market. The exchange authority will need to approve your seat
     RequestSeat,
+    
     Instruction16,
 }
 

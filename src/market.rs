@@ -11,7 +11,7 @@ pub struct LadderOrder {
     /// The limit price of the order, in quote ticks per base unit.
     pub price_in_ticks: u64,
 
-    /// The quantity of the order, in lots.
+    /// The quantity of the order, in base lots.
     pub size_in_base_lots: u64,
 }
 
@@ -133,16 +133,13 @@ impl MarketHeader {
     pub fn get_tick_size(&self) -> u64 {
         self.tick_size
     }
-
-    pub fn increment_market_sequence_number(&mut self) {
-        self.market_sequence_number += 1;
-    }
 }
 
+/// Struct representing a market that matches by price-time priority.
 #[repr(C)]
 #[derive(Default, Copy, Clone, Zeroable)]
 pub struct FIFOMarket<const BIDS_SIZE: usize, const ASKS_SIZE: usize, const NUM_SEATS: usize> {
-    /// Number of base lots in a base unit. For example, if the lot size is 0.001 SOL, then base_lots_per_unit is 1000.
+    /// Number of base lots in a base unit. For example, if the lot size is 0.001 SOL, then base_lots_per_base_unit is 1000.
     pub base_lots_per_base_unit: u64,
 
     /// Tick size in terms of quote lots. For example, if the tick size is 0.01 USDC and the quote lot size is 0.001 USDC, then quote_lots_per_tick is 10.
@@ -219,6 +216,7 @@ impl<const BIDS_SIZE: usize, const ASKS_SIZE: usize, const NUM_SEATS: usize> Mar
     }
 }
 
+/// Struct representing the size parameters of a market.
 #[derive(Debug, Copy, Clone, BorshDeserialize, BorshSerialize, Zeroable, Pod)]
 #[repr(C)]
 pub struct MarketParams {
@@ -228,6 +226,7 @@ pub struct MarketParams {
 }
 impl ZeroCopy for MarketParams {}
 
+/// Struct representing the parameters for a token.
 #[derive(Debug, Copy, Clone, BorshDeserialize, BorshSerialize, Zeroable, Pod)]
 #[repr(C)]
 pub struct TokenParams {
@@ -245,6 +244,7 @@ pub struct TokenParams {
 }
 impl ZeroCopy for TokenParams {}
 
+/// Struct representing the state of a trader's seat in a market.
 #[derive(Debug, Clone, Copy, BorshDeserialize, BorshSerialize, Zeroable, Pod)]
 #[repr(C)]
 pub struct Seat {
@@ -256,6 +256,7 @@ pub struct Seat {
 
 impl ZeroCopy for Seat {}
 
+/// Struct representing an order's key in the order book. It is a combination of the order's price and the order's sequence number.
 #[repr(C)]
 #[derive(Eq, PartialEq, Debug, Default, Copy, Clone, Zeroable, Pod)]
 pub struct FIFOOrderId {

@@ -1,7 +1,7 @@
 use crate::market::{FIFOMarket, Market, MarketParams};
 use sokoban::node_allocator::ZeroCopy;
 
-/// Struct that holds a Market object.
+/// Struct that holds an object implementing the Market trait.
 pub struct MarketWrapper<'a> {
     pub inner: &'a mut dyn Market,
 }
