@@ -127,7 +127,7 @@ pub fn create_new_order_instruction_with_custom_token_accounts(
 ) -> Instruction {
     let (base_vault, _) = get_vault_address(market, base);
     let (quote_vault, _) = get_vault_address(market, quote);
-    if order_type.is_take_only() {
+    if let OrderPacket::ImmediateOrCancel { .. } = order_type {
         Instruction {
             program_id: crate::id(),
             accounts: vec![
