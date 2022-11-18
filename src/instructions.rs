@@ -96,80 +96,6 @@ pub struct DepositParams {
     pub base_lots: u64,
 }
 
-pub fn create_new_order_instruction(
-    market: &Pubkey,
-    trader: &Pubkey,
-    base: &Pubkey,
-    quote: &Pubkey,
-    order_type: &OrderPacket,
-) -> Instruction {
-    let base_account = get_associated_token_address(trader, base);
-    let quote_account = get_associated_token_address(trader, quote);
-    create_new_order_instruction_with_custom_token_accounts(
-        market,
-        trader,
-        &base_account,
-        &quote_account,
-        base,
-        quote,
-        order_type,
-    )
-}
-
-pub fn create_new_order_instruction_with_custom_token_accounts(
-    market: &Pubkey,
-    trader: &Pubkey,
-    base_account: &Pubkey,
-    quote_account: &Pubkey,
-    base: &Pubkey,
-    quote: &Pubkey,
-    order_type: &OrderPacket,
-) -> Instruction {
-    let (base_vault, _) = get_vault_address(market, base);
-    let (quote_vault, _) = get_vault_address(market, quote);
-    if let OrderPacket::ImmediateOrCancel { .. } = order_type {
-        Instruction {
-            program_id: crate::id(),
-            accounts: vec![
-                AccountMeta::new(*market, false),
-                AccountMeta::new(*trader, true),
-                AccountMeta::new_readonly(spl_noop::id(), false),
-                AccountMeta::new(*base_account, false),
-                AccountMeta::new(*quote_account, false),
-                AccountMeta::new(base_vault, false),
-                AccountMeta::new(quote_vault, false),
-                AccountMeta::new_readonly(spl_token::id(), false),
-            ],
-            data: [
-                PhoenixInstruction::Swap.try_to_vec().unwrap(),
-                order_type.try_to_vec().unwrap(),
-            ]
-            .concat(),
-        }
-    } else {
-        let (seat, _) = get_seat_address(market, trader);
-        Instruction {
-            program_id: crate::id(),
-            accounts: vec![
-                AccountMeta::new(*market, false),
-                AccountMeta::new(*trader, true),
-                AccountMeta::new_readonly(spl_noop::id(), false),
-                AccountMeta::new_readonly(seat, false),
-                AccountMeta::new(*base_account, false),
-                AccountMeta::new(*quote_account, false),
-                AccountMeta::new(base_vault, false),
-                AccountMeta::new(quote_vault, false),
-                AccountMeta::new_readonly(spl_token::id(), false),
-            ],
-            data: [
-                PhoenixInstruction::PlaceLimitOrder.try_to_vec().unwrap(),
-                order_type.try_to_vec().unwrap(),
-            ]
-            .concat(),
-        }
-    }
-}
-
 pub fn create_new_order_with_free_funds_instruction(
     market: &Pubkey,
     trader: &Pubkey,
@@ -185,38 +111,83 @@ pub fn create_new_order_instruction_with_free_funds_with_custom_token_accounts(
     trader: &Pubkey,
     order_type: &OrderPacket,
 ) -> Instruction {
-    if let OrderPacket::ImmediateOrCancel { .. } = order_type {
-        Instruction {
-            program_id: crate::id(),
-            accounts: vec![
-                AccountMeta::new(*market, false),
-                AccountMeta::new(*trader, true),
-                AccountMeta::new_readonly(spl_noop::id(), false),
-            ],
-            data: [
-                PhoenixInstruction::SwapWithFreeFunds.try_to_vec().unwrap(),
-                order_type.try_to_vec().unwrap(),
-            ]
-            .concat(),
-        }
-    } else {
-        let (seat, _) = get_seat_address(market, trader);
-        Instruction {
-            program_id: crate::id(),
-            accounts: vec![
-                AccountMeta::new(*market, false),
-                AccountMeta::new(*trader, true),
-                AccountMeta::new_readonly(spl_noop::id(), false),
-                AccountMeta::new_readonly(seat, false),
-            ],
-            data: [
+    let (seat, _) = get_seat_address(market, trader);
+    Instruction {
+        program_id: crate::id(),
+        accounts: vec![
+            AccountMeta::new(*market, false),
+            AccountMeta::new(*trader, true),
+            AccountMeta::new_readonly(spl_noop::id(), false),
+            AccountMeta::new_readonly(seat, false),
+        ],
+        data: [
+            if let OrderPacket::ImmediateOrCancel { .. } = order_type {
+                PhoenixInstruction::SwapWithFreeFunds.try_to_vec().unwrap()
+            } else {
                 PhoenixInstruction::PlaceLimitOrderWithFreeFunds
                     .try_to_vec()
-                    .unwrap(),
-                order_type.try_to_vec().unwrap(),
-            ]
-            .concat(),
-        }
+                    .unwrap()
+            },
+            order_type.try_to_vec().unwrap(),
+        ]
+        .concat(),
+    }
+}
+
+pub fn create_deposit_funds_instruction(
+    market: &Pubkey,
+    trader: &Pubkey,
+    base: &Pubkey,
+    quote: &Pubkey,
+    params: &DepositParams,
+) -> Instruction {
+    let base_account = get_associated_token_address(trader, base);
+    let quote_account = get_associated_token_address(trader, quote);
+    let (seat, _) = get_seat_address(market, trader);
+    create_deposit_funds_instruction_with_custom_token_accounts(
+        market,
+        trader,
+        &base_account,
+        &quote_account,
+        base,
+        quote,
+        &seat,
+        params,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn create_deposit_funds_instruction_with_custom_token_accounts(
+    market: &Pubkey,
+    trader: &Pubkey,
+    base_account: &Pubkey,
+    quote_account: &Pubkey,
+    base: &Pubkey,
+    quote: &Pubkey,
+    seat: &Pubkey,
+    params: &DepositParams,
+) -> Instruction {
+    let (base_vault, _) = get_vault_address(market, base);
+    let (quote_vault, _) = get_vault_address(market, quote);
+    let ix_data = params.try_to_vec().unwrap();
+    Instruction {
+        program_id: crate::id(),
+        accounts: vec![
+            AccountMeta::new(*market, false),
+            AccountMeta::new(*trader, true),
+            AccountMeta::new(*base_account, false),
+            AccountMeta::new(*quote_account, false),
+            AccountMeta::new(base_vault, false),
+            AccountMeta::new(quote_vault, false),
+            AccountMeta::new(*seat, false),
+            AccountMeta::new_readonly(spl_token::id(), false),
+            AccountMeta::new_readonly(spl_noop::id(), false),
+        ],
+        data: [
+            PhoenixInstruction::DepositFunds.try_to_vec().unwrap(),
+            ix_data,
+        ]
+        .concat(),
     }
 }
 
@@ -269,12 +240,12 @@ fn _phoenix_instruction_template_no_param(
         accounts: vec![
             AccountMeta::new(*market, false),
             AccountMeta::new(*trader, true),
+            AccountMeta::new_readonly(spl_noop::id(), false),
             AccountMeta::new(*base_account, false),
             AccountMeta::new(*quote_account, false),
             AccountMeta::new(base_vault, false),
             AccountMeta::new(quote_vault, false),
             AccountMeta::new_readonly(spl_token::id(), false),
-            AccountMeta::new_readonly(spl_noop::id(), false),
         ],
         data: ix_id.try_to_vec().unwrap(),
     }
@@ -489,45 +460,4 @@ pub fn create_request_seat_instruction(payer: &Pubkey, market: &Pubkey) -> Instr
         ],
         data: PhoenixInstruction::RequestSeat.try_to_vec().unwrap(),
     }
-}
-
-pub fn create_deposit_funds_instruction(
-    market: &Pubkey,
-    trader: &Pubkey,
-    base: &Pubkey,
-    quote: &Pubkey,
-    params: &DepositParams,
-) -> Instruction {
-    let base_account = get_associated_token_address(trader, base);
-    let quote_account = get_associated_token_address(trader, quote);
-    create_deposit_funds_instruction_with_custom_token_accounts(
-        market,
-        trader,
-        &base_account,
-        &quote_account,
-        base,
-        quote,
-        params,
-    )
-}
-
-pub fn create_deposit_funds_instruction_with_custom_token_accounts(
-    market: &Pubkey,
-    trader: &Pubkey,
-    base_account: &Pubkey,
-    quote_account: &Pubkey,
-    base: &Pubkey,
-    quote: &Pubkey,
-    params: &DepositParams,
-) -> Instruction {
-    _phoenix_instruction_template(
-        market,
-        trader,
-        base_account,
-        quote_account,
-        base,
-        quote,
-        PhoenixInstruction::DepositFunds,
-        Some(params),
-    )
 }
