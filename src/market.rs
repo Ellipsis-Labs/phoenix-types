@@ -7,10 +7,14 @@ use sokoban::node_allocator::{NodeAllocatorMap, OrderedNodeAllocatorMap, ZeroCop
 use sokoban::RedBlackTree;
 use solana_sdk::pubkey::Pubkey;
 
+/// Representation of an order on the book.
 #[cfg_attr(feature = "pyo3", pyclass(get_all, set_all))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct LadderOrder {
+    /// The limit price of the order, in quote ticks per base unit.
     pub price_in_ticks: u64,
+
+    /// The quantity of the order, in base lots.
     pub size_in_base_lots: u64,
 }
 
@@ -26,11 +30,14 @@ impl LadderOrder {
     }
 }
 
-/// Helpful struct for processing the order book state
+/// Representation of an order book.
 #[cfg_attr(feature = "pyo3", pyclass(get_all, set_all))]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Ladder {
+    /// The bids on the book.
     pub bids: Vec<LadderOrder>,
+
+    /// The asks on the book.
     pub asks: Vec<LadderOrder>,
 }
 
@@ -47,9 +54,11 @@ pub trait Market {
     fn get_ladder(&self, levels: u64) -> Ladder {
         let mut bids = vec![];
         let mut asks = vec![];
+
         if levels == 0 {
             return Ladder { bids, asks };
         }
+
         for (side, book) in [(Side::Bid, &mut bids), (Side::Ask, &mut asks)].iter_mut() {
             for (key, order) in self.get_book(*side).iter() {
                 let price = key.num_quote_ticks_per_base_unit;
@@ -75,12 +84,14 @@ pub trait Market {
                 }
             }
         }
+
         Ladder { bids, asks }
     }
 
     fn get_registered_traders(&self) -> &dyn OrderedNodeAllocatorMap<Pubkey, TraderState>;
 
     fn get_quote_lots_per_tick(&self) -> u64;
+
     fn get_base_lots_per_base_unit(&self) -> u64;
 
     fn get_trader_address(&self, trader: &Pubkey) -> Option<u32>;
@@ -90,19 +101,38 @@ pub trait Market {
     fn get_book(&self, side: Side) -> &dyn OrderedNodeAllocatorMap<FIFOOrderId, FIFORestingOrder>;
 }
 
+/// Struct representing a market's header.
 #[derive(Debug, Clone, Copy, BorshDeserialize, BorshSerialize, Zeroable, Pod)]
 #[repr(C)]
 pub struct MarketHeader {
     pub discriminant: u64,
+
     pub status: u64,
-    pub params: MarketParams,
+
+    /// The size params of the market.
+    pub market_params: MarketParams,
+
+    /// The specification of the base token of the market.
     pub base_params: TokenParams,
+
+    /// The lot size of the base token of the market, in base atoms.
     base_lot_size: u64,
+
+    /// The specification of the quote token of the market.
     pub quote_params: TokenParams,
+
+    /// The lot size of the quote token of the market, in quote atoms.
     quote_lot_size: u64,
+
+    /// The number of quote lots per tick in the market.
     tick_size: u64,
+
+    /// The Pubkey of the market authority.
     pub authority: Pubkey,
-    pub sequence_number: u64,
+
+    /// The sequence number of the market.
+    pub market_sequence_number: u64,
+
     _padding1: u64,
     _padding2: u64,
     _padding3: u64,
@@ -128,16 +158,13 @@ impl MarketHeader {
     pub fn get_tick_size(&self) -> u64 {
         self.tick_size
     }
-
-    pub fn increment_sequence_number(&mut self) {
-        self.sequence_number += 1;
-    }
 }
 
+/// Struct representing a market that matches by price-time priority.
 #[repr(C)]
 #[derive(Default, Copy, Clone, Zeroable)]
 pub struct FIFOMarket<const BIDS_SIZE: usize, const ASKS_SIZE: usize, const NUM_SEATS: usize> {
-    /// Number of base lots in a base unit. For example, if the lot size is 0.001 SOL, then base_lots_per_unit is 1000.
+    /// Number of base lots in a base unit. For example, if the lot size is 0.001 SOL, then base_lots_per_base_unit is 1000.
     pub base_lots_per_base_unit: u64,
 
     /// Tick size in terms of quote lots. For example, if the tick size is 0.01 USDC and the quote lot size is 0.001 USDC, then quote_lots_per_tick is 10.
@@ -214,6 +241,7 @@ impl<const BIDS_SIZE: usize, const ASKS_SIZE: usize, const NUM_SEATS: usize> Mar
     }
 }
 
+/// Struct representing the size parameters of a market.
 #[derive(Debug, Copy, Clone, BorshDeserialize, BorshSerialize, Zeroable, Pod)]
 #[repr(C)]
 pub struct MarketParams {
@@ -223,6 +251,7 @@ pub struct MarketParams {
 }
 impl ZeroCopy for MarketParams {}
 
+/// Struct representing the parameters for a token.
 #[derive(Debug, Copy, Clone, BorshDeserialize, BorshSerialize, Zeroable, Pod)]
 #[repr(C)]
 pub struct TokenParams {
@@ -240,6 +269,7 @@ pub struct TokenParams {
 }
 impl ZeroCopy for TokenParams {}
 
+/// Struct representing the state of a trader's seat in a market.
 #[derive(Debug, Clone, Copy, BorshDeserialize, BorshSerialize, Zeroable, Pod)]
 #[repr(C)]
 pub struct Seat {
@@ -251,6 +281,7 @@ pub struct Seat {
 
 impl ZeroCopy for Seat {}
 
+/// Struct representing an order's key in the order book. It is a combination of the order's price and the order's sequence number.
 #[cfg_attr(feature = "pyo3", pyclass(get_all, set_all))]
 #[repr(C)]
 #[derive(Eq, PartialEq, Debug, Default, Copy, Clone, Zeroable, Pod)]
