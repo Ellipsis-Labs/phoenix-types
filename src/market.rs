@@ -1,11 +1,14 @@
 use crate::enums::Side;
 use borsh::{BorshDeserialize, BorshSerialize};
 use bytemuck::{Pod, Zeroable};
+#[cfg(feature = "pyo3")]
+use pyo3::prelude::*;
 use sokoban::node_allocator::{NodeAllocatorMap, OrderedNodeAllocatorMap, ZeroCopy, SENTINEL};
 use sokoban::RedBlackTree;
 use solana_sdk::pubkey::Pubkey;
 
 /// Representation of an order on the book.
+#[cfg_attr(feature = "pyo3", pyclass(get_all, set_all))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct LadderOrder {
     /// The limit price of the order, in quote ticks per base unit.
@@ -15,7 +18,20 @@ pub struct LadderOrder {
     pub size_in_base_lots: u64,
 }
 
+#[cfg(feature = "pyo3")]
+#[pymethods]
+impl LadderOrder {
+    #[new]
+    pub fn new(price_in_ticks: u64, size_in_base_lots: u64) -> Self {
+        Self {
+            price_in_ticks,
+            size_in_base_lots,
+        }
+    }
+}
+
 /// Representation of an order book.
+#[cfg_attr(feature = "pyo3", pyclass(get_all, set_all))]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Ladder {
     /// The bids on the book.
@@ -23,6 +39,15 @@ pub struct Ladder {
 
     /// The asks on the book.
     pub asks: Vec<LadderOrder>,
+}
+
+#[cfg(feature = "pyo3")]
+#[pymethods]
+impl Ladder {
+    #[new]
+    pub fn new(bids: Vec<LadderOrder>, asks: Vec<LadderOrder>) -> Self {
+        Self { bids, asks }
+    }
 }
 
 pub trait Market {
@@ -257,6 +282,7 @@ pub struct Seat {
 impl ZeroCopy for Seat {}
 
 /// Struct representing an order's key in the order book. It is a combination of the order's price and the order's sequence number.
+#[cfg_attr(feature = "pyo3", pyclass(get_all, set_all))]
 #[repr(C)]
 #[derive(Eq, PartialEq, Debug, Default, Copy, Clone, Zeroable, Pod)]
 pub struct FIFOOrderId {
@@ -276,6 +302,24 @@ pub struct FIFOOrderId {
     /// The way to identify the side of the order is to check the leading bit of `order_id`.
     /// A leading bit of 0 indicates an ask, and a leading bit of 1 indicates a bid. See Side::from_order_id.
     pub order_sequence_number: u64,
+}
+
+#[cfg(feature = "pyo3")]
+#[pymethods]
+impl FIFOOrderId {
+    #[pyo3(name = "new_from_untyped")]
+    #[staticmethod]
+    pub fn py_new_from_untyped(
+        num_quote_ticks_per_base_unit: u64,
+        order_sequence_number: u64,
+    ) -> Self {
+        Self::new_from_untyped(num_quote_ticks_per_base_unit, order_sequence_number)
+    }
+
+    #[new]
+    pub fn py_new(num_quote_ticks_per_base_unit: u64, order_sequence_number: u64) -> Self {
+        Self::new(num_quote_ticks_per_base_unit, order_sequence_number)
+    }
 }
 
 impl FIFOOrderId {
