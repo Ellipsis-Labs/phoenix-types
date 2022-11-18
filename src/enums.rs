@@ -2,6 +2,7 @@ use borsh::{BorshDeserialize, BorshSerialize};
 #[cfg(feature = "pyo3")]
 use pyo3::prelude::*;
 
+/// Options for an order's self trade behavior.
 #[cfg_attr(feature = "pyo3", pyclass)]
 #[derive(BorshDeserialize, BorshSerialize, Copy, Clone, PartialEq, Eq, Debug)]
 pub enum SelfTradeBehavior {
@@ -16,6 +17,7 @@ pub enum SelfTradeBehavior {
     DecrementTake,
 }
 
+/// Options for an order's side.
 #[cfg_attr(feature = "pyo3", pyclass)]
 #[derive(BorshDeserialize, BorshSerialize, Copy, Clone, PartialEq, Eq, Debug)]
 pub enum Side {
