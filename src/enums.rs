@@ -2,6 +2,7 @@ use borsh::{BorshDeserialize, BorshSerialize};
 #[cfg(feature = "pyo3")]
 use pyo3::prelude::*;
 
+#[cfg_attr(feature = "pyo3", pyclass)]
 #[derive(BorshDeserialize, BorshSerialize, Copy, Clone, PartialEq, Eq, Debug)]
 pub enum SelfTradeBehavior {
     Abort,

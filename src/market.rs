@@ -1,6 +1,8 @@
 use crate::enums::Side;
 use borsh::{BorshDeserialize, BorshSerialize};
 use bytemuck::{Pod, Zeroable};
+#[cfg(feature = "pyo3")]
+use pyo3::prelude::*;
 use sokoban::node_allocator::{NodeAllocatorMap, OrderedNodeAllocatorMap, ZeroCopy, SENTINEL};
 use sokoban::RedBlackTree;
 use solana_sdk::pubkey::Pubkey;
@@ -226,6 +228,7 @@ pub struct Seat {
 
 impl ZeroCopy for Seat {}
 
+#[cfg_attr(feature = "pyo3", pyclass(get_all, set_all))]
 #[repr(C)]
 #[derive(Eq, PartialEq, Debug, Default, Copy, Clone, Zeroable, Pod)]
 pub struct FIFOOrderId {
