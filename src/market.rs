@@ -7,17 +7,40 @@ use sokoban::node_allocator::{NodeAllocatorMap, OrderedNodeAllocatorMap, ZeroCop
 use sokoban::RedBlackTree;
 use solana_sdk::pubkey::Pubkey;
 
+#[cfg_attr(feature = "pyo3", pyclass(get_all, set_all))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct LadderOrder {
     pub price_in_ticks: u64,
     pub size_in_base_lots: u64,
 }
 
+#[cfg(feature = "pyo3")]
+#[pymethods]
+impl LadderOrder {
+    #[new]
+    pub fn new(price_in_ticks: u64, size_in_base_lots: u64) -> Self {
+        Self {
+            price_in_ticks,
+            size_in_base_lots,
+        }
+    }
+}
+
 /// Helpful struct for processing the order book state
+#[cfg_attr(feature = "pyo3", pyclass(get_all, set_all))]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Ladder {
     pub bids: Vec<LadderOrder>,
     pub asks: Vec<LadderOrder>,
+}
+
+#[cfg(feature = "pyo3")]
+#[pymethods]
+impl Ladder {
+    #[new]
+    pub fn new(bids: Vec<LadderOrder>, asks: Vec<LadderOrder>) -> Self {
+        Self { bids, asks }
+    }
 }
 
 pub trait Market {
@@ -248,6 +271,24 @@ pub struct FIFOOrderId {
     /// The way to identify the side of the order is to check the leading bit of `order_id`.
     /// A leading bit of 0 indicates an ask, and a leading bit of 1 indicates a bid. See Side::from_order_id.
     pub order_sequence_number: u64,
+}
+
+#[cfg(feature = "pyo3")]
+#[pymethods]
+impl FIFOOrderId {
+    #[pyo3(name = "new_from_untyped")]
+    #[staticmethod]
+    pub fn py_new_from_untyped(
+        num_quote_ticks_per_base_unit: u64,
+        order_sequence_number: u64,
+    ) -> Self {
+        Self::new_from_untyped(num_quote_ticks_per_base_unit, order_sequence_number)
+    }
+
+    #[new]
+    pub fn py_new(num_quote_ticks_per_base_unit: u64, order_sequence_number: u64) -> Self {
+        Self::new(num_quote_ticks_per_base_unit, order_sequence_number)
+    }
 }
 
 impl FIFOOrderId {
