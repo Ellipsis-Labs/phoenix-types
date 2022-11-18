@@ -58,6 +58,10 @@ pub enum PhoenixInstruction {
     RequestSeat,
     
     Instruction16,
+    /// Send a swap order only using previously deposited funds. Need a seat to do this.
+    SwapWithFreeFunds,
+    /// Place a limit order on the book using only deposited funds.
+    PlaceLimitOrderWithFreeFunds,
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Clone, Copy)]
@@ -129,12 +133,12 @@ pub fn create_new_order_instruction_with_custom_token_accounts(
             accounts: vec![
                 AccountMeta::new(*market, false),
                 AccountMeta::new(*trader, true),
+                AccountMeta::new_readonly(spl_noop::id(), false),
                 AccountMeta::new(*base_account, false),
                 AccountMeta::new(*quote_account, false),
                 AccountMeta::new(base_vault, false),
                 AccountMeta::new(quote_vault, false),
                 AccountMeta::new_readonly(spl_token::id(), false),
-                AccountMeta::new_readonly(spl_noop::id(), false),
             ],
             data: [
                 PhoenixInstruction::Swap.try_to_vec().unwrap(),
@@ -149,16 +153,66 @@ pub fn create_new_order_instruction_with_custom_token_accounts(
             accounts: vec![
                 AccountMeta::new(*market, false),
                 AccountMeta::new(*trader, true),
+                AccountMeta::new_readonly(spl_noop::id(), false),
+                AccountMeta::new_readonly(seat, false),
                 AccountMeta::new(*base_account, false),
                 AccountMeta::new(*quote_account, false),
                 AccountMeta::new(base_vault, false),
                 AccountMeta::new(quote_vault, false),
                 AccountMeta::new_readonly(spl_token::id(), false),
+            ],
+            data: [
+                PhoenixInstruction::PlaceLimitOrder.try_to_vec().unwrap(),
+                order_type.try_to_vec().unwrap(),
+            ]
+            .concat(),
+        }
+    }
+}
+
+pub fn create_new_order_with_free_funds_instruction(
+    market: &Pubkey,
+    trader: &Pubkey,
+    order_type: &OrderPacket,
+) -> Instruction {
+    create_new_order_instruction_with_free_funds_with_custom_token_accounts(
+        market, trader, order_type,
+    )
+}
+
+pub fn create_new_order_instruction_with_free_funds_with_custom_token_accounts(
+    market: &Pubkey,
+    trader: &Pubkey,
+    order_type: &OrderPacket,
+) -> Instruction {
+    if let OrderPacket::ImmediateOrCancel { .. } = order_type {
+        Instruction {
+            program_id: crate::id(),
+            accounts: vec![
+                AccountMeta::new(*market, false),
+                AccountMeta::new(*trader, true),
+                AccountMeta::new_readonly(spl_noop::id(), false),
+            ],
+            data: [
+                PhoenixInstruction::SwapWithFreeFunds.try_to_vec().unwrap(),
+                order_type.try_to_vec().unwrap(),
+            ]
+            .concat(),
+        }
+    } else {
+        let (seat, _) = get_seat_address(market, trader);
+        Instruction {
+            program_id: crate::id(),
+            accounts: vec![
+                AccountMeta::new(*market, false),
+                AccountMeta::new(*trader, true),
                 AccountMeta::new_readonly(spl_noop::id(), false),
                 AccountMeta::new_readonly(seat, false),
             ],
             data: [
-                PhoenixInstruction::PlaceLimitOrder.try_to_vec().unwrap(),
+                PhoenixInstruction::PlaceLimitOrderWithFreeFunds
+                    .try_to_vec()
+                    .unwrap(),
                 order_type.try_to_vec().unwrap(),
             ]
             .concat(),
@@ -188,12 +242,12 @@ fn _phoenix_instruction_template<T: BorshSerialize>(
         accounts: vec![
             AccountMeta::new(*market, false),
             AccountMeta::new(*trader, true),
+            AccountMeta::new_readonly(spl_noop::id(), false),
             AccountMeta::new(*base_account, false),
             AccountMeta::new(*quote_account, false),
             AccountMeta::new(base_vault, false),
             AccountMeta::new(quote_vault, false),
             AccountMeta::new_readonly(spl_token::id(), false),
-            AccountMeta::new_readonly(spl_noop::id(), false),
         ],
         data: [ix_id.try_to_vec().unwrap(), ix_data].concat(),
     }
