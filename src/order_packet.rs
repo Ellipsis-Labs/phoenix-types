@@ -20,6 +20,9 @@ pub enum OrderPacket {
         /// Flag for whether or not to reject the order if it would immediately match or amend it to the best non-crossing price
         /// Default value is true
         reject_post_only: bool,
+
+        /// Flag for whether or not the order should only use funds that are already in the account
+        use_only_deposited_funds: bool,
     },
 
     /// This order type is used to place a limit order on the book
@@ -42,6 +45,9 @@ pub enum OrderPacket {
 
         /// Client order id used to identify the order in the response to the client
         client_order_id: u128,
+
+        /// Flag for whether or not the order should only use funds that are already in the account
+        use_only_deposited_funds: bool,
     },
 
     /// This order type is used to place an order that will be matched against existing resting orders
@@ -83,6 +89,9 @@ pub enum OrderPacket {
 
         /// Client order id used to identify the order in the program's inner instruction data.
         client_order_id: u128,
+
+        /// Flag for whether or not the order should only use funds that are already in the account
+        use_only_deposited_funds: bool,
     },
 }
 
@@ -94,6 +103,7 @@ impl OrderPacket {
             num_base_lots,
             client_order_id: 0,
             reject_post_only: true,
+            use_only_deposited_funds: false,
         }
     }
 
@@ -109,6 +119,7 @@ impl OrderPacket {
             num_base_lots,
             client_order_id,
             reject_post_only: true,
+            use_only_deposited_funds: false,
         }
     }
 
@@ -124,6 +135,7 @@ impl OrderPacket {
             num_base_lots,
             client_order_id,
             reject_post_only: false,
+            use_only_deposited_funds: false,
         }
     }
 
@@ -133,6 +145,7 @@ impl OrderPacket {
         num_base_lots: u64,
         client_order_id: u128,
         reject_post_only: bool,
+        use_only_deposited_funds: bool,
     ) -> Self {
         Self::PostOnly {
             side,
@@ -140,6 +153,7 @@ impl OrderPacket {
             num_base_lots,
             client_order_id,
             reject_post_only,
+            use_only_deposited_funds,
         }
     }
 
@@ -151,6 +165,7 @@ impl OrderPacket {
             SelfTradeBehavior::CancelProvide,
             None,
             0,
+            false,
         )
     }
 
@@ -167,6 +182,7 @@ impl OrderPacket {
             SelfTradeBehavior::CancelProvide,
             None,
             client_order_id,
+            false,
         )
     }
 
@@ -177,6 +193,7 @@ impl OrderPacket {
         self_trade_behavior: SelfTradeBehavior,
         match_limit: Option<u64>,
         client_order_id: u128,
+        use_only_deposited_funds: bool,
     ) -> Self {
         Self::Limit {
             side,
@@ -185,6 +202,7 @@ impl OrderPacket {
             self_trade_behavior,
             match_limit,
             client_order_id,
+            use_only_deposited_funds,
         }
     }
 
@@ -194,6 +212,7 @@ impl OrderPacket {
         self_trade_behavior: SelfTradeBehavior,
         match_limit: Option<u64>,
         client_order_id: u128,
+        use_only_deposited_funds: bool,
     ) -> Self {
         Self::new_ioc(
             Side::Ask,
@@ -205,6 +224,7 @@ impl OrderPacket {
             self_trade_behavior,
             match_limit,
             client_order_id,
+            use_only_deposited_funds,
         )
     }
 
@@ -214,6 +234,7 @@ impl OrderPacket {
         self_trade_behavior: SelfTradeBehavior,
         match_limit: Option<u64>,
         client_order_id: u128,
+        use_only_deposited_funds: bool,
     ) -> Self {
         Self::new_ioc(
             Side::Bid,
@@ -225,6 +246,7 @@ impl OrderPacket {
             self_trade_behavior,
             match_limit,
             client_order_id,
+            use_only_deposited_funds,
         )
     }
 
@@ -234,6 +256,7 @@ impl OrderPacket {
         self_trade_behavior: SelfTradeBehavior,
         match_limit: Option<u64>,
         client_order_id: u128,
+        use_only_deposited_funds: bool,
     ) -> Self {
         Self::new_ioc(
             Side::Ask,
@@ -245,6 +268,7 @@ impl OrderPacket {
             self_trade_behavior,
             match_limit,
             client_order_id,
+            use_only_deposited_funds,
         )
     }
 
@@ -254,6 +278,7 @@ impl OrderPacket {
         self_trade_behavior: SelfTradeBehavior,
         match_limit: Option<u64>,
         client_order_id: u128,
+        use_only_deposited_funds: bool,
     ) -> Self {
         Self::new_ioc(
             Side::Bid,
@@ -265,6 +290,7 @@ impl OrderPacket {
             self_trade_behavior,
             match_limit,
             client_order_id,
+            use_only_deposited_funds,
         )
     }
 
@@ -275,6 +301,7 @@ impl OrderPacket {
         self_trade_behavior: SelfTradeBehavior,
         match_limit: Option<u64>,
         client_order_id: u128,
+        use_only_deposited_funds: bool,
     ) -> Self {
         Self::new_ioc(
             side,
@@ -286,6 +313,7 @@ impl OrderPacket {
             self_trade_behavior,
             match_limit,
             client_order_id,
+            use_only_deposited_funds,
         )
     }
 
@@ -304,6 +332,7 @@ impl OrderPacket {
             SelfTradeBehavior::CancelProvide,
             None,
             client_order_id,
+            false,
         )
     }
 
@@ -322,6 +351,7 @@ impl OrderPacket {
             SelfTradeBehavior::CancelProvide,
             None,
             client_order_id,
+            false,
         )
     }
 
@@ -336,6 +366,7 @@ impl OrderPacket {
             SelfTradeBehavior::CancelProvide,
             None,
             0,
+            false,
         )
     }
 
@@ -350,6 +381,7 @@ impl OrderPacket {
             SelfTradeBehavior::CancelProvide,
             None,
             0,
+            false,
         )
     }
 
@@ -364,6 +396,7 @@ impl OrderPacket {
             SelfTradeBehavior::CancelProvide,
             None,
             0,
+            false,
         )
     }
 
@@ -378,6 +411,7 @@ impl OrderPacket {
             SelfTradeBehavior::CancelProvide,
             None,
             0,
+            false,
         )
     }
 
@@ -392,6 +426,7 @@ impl OrderPacket {
         self_trade_behavior: SelfTradeBehavior,
         match_limit: Option<u64>,
         client_order_id: u128,
+        use_only_deposited_funds: bool,
     ) -> Self {
         Self::ImmediateOrCancel {
             side,
@@ -403,6 +438,7 @@ impl OrderPacket {
             self_trade_behavior,
             match_limit,
             client_order_id,
+            use_only_deposited_funds,
         }
     }
 }
