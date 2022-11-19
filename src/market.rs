@@ -3,13 +3,14 @@ use borsh::{BorshDeserialize, BorshSerialize};
 use bytemuck::{Pod, Zeroable};
 #[cfg(feature = "pyo3")]
 use pyo3::prelude::*;
+use serde::{Deserialize, Serialize};
 use sokoban::node_allocator::{NodeAllocatorMap, OrderedNodeAllocatorMap, ZeroCopy, SENTINEL};
 use sokoban::RedBlackTree;
 use solana_sdk::pubkey::Pubkey;
 
 /// Representation of an order on the book.
 #[cfg_attr(feature = "pyo3", pyclass(get_all, set_all))]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct LadderOrder {
     /// The limit price of the order, in quote ticks per base unit.
     pub price_in_ticks: u64,
@@ -32,7 +33,7 @@ impl LadderOrder {
 
 /// Representation of an order book.
 #[cfg_attr(feature = "pyo3", pyclass(get_all, set_all))]
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Ladder {
     /// The bids on the book.
     pub bids: Vec<LadderOrder>,
@@ -284,7 +285,7 @@ impl ZeroCopy for Seat {}
 /// Struct representing an order's key in the order book. It is a combination of the order's price and the order's sequence number.
 #[cfg_attr(feature = "pyo3", pyclass(get_all, set_all))]
 #[repr(C)]
-#[derive(Eq, PartialEq, Debug, Default, Copy, Clone, Zeroable, Pod)]
+#[derive(Eq, PartialEq, Debug, Default, Copy, Clone, Zeroable, Pod, Serialize, Deserialize)]
 pub struct FIFOOrderId {
     /// This is equivalent to price of an order, in quote ticks per base unit. Each market has a designated
     /// tick size (some number of quote lots) that is used to convert the price to quote ticks per base unit.

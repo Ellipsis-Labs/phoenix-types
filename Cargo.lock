@@ -958,6 +958,7 @@ dependencies = [
  "bytemuck",
  "lib-sokoban",
  "pyo3",
+ "serde",
  "solana-sdk",
  "spl-associated-token-account",
  "spl-noop",
