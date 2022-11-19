@@ -40,6 +40,7 @@ macro_rules! common_methods_boilerplate {
     };
 }
 
+#[cfg(feature = "pyo3")]
 common_methods_boilerplate!(LadderOrder);
 
 #[cfg(feature = "pyo3")]
@@ -66,6 +67,7 @@ pub struct Ladder {
     pub asks: Vec<LadderOrder>,
 }
 
+#[cfg(feature = "pyo3")]
 common_methods_boilerplate!(Ladder);
 
 #[cfg(feature = "pyo3")]
@@ -332,6 +334,7 @@ pub struct FIFOOrderId {
     pub order_sequence_number: u64,
 }
 
+#[cfg(feature = "pyo3")]
 common_methods_boilerplate!(FIFOOrderId);
 
 #[cfg(feature = "pyo3")]
