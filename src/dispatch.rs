@@ -16,14 +16,14 @@ impl<'a> MarketWrapper<'a> {
 pub fn load_with_dispatch_mut<'a>(
     market_params: &'a MarketParams,
     bytes: &'a mut [u8],
-) -> Option<MarketWrapper> {
+) -> Option<MarketWrapper<'a>> {
     dispatch_market_mut(market_params, bytes)
 }
 
 fn dispatch_market_mut<'a>(
     market_params: &'a MarketParams,
     bytes: &'a mut [u8],
-) -> Option<MarketWrapper> {
+) -> Option<MarketWrapper<'a>> {
     let market = match (
         market_params.bids_size,
         market_params.asks_size,
