@@ -97,6 +97,14 @@ pub enum OrderPacket {
 }
 
 impl OrderPacket {
+    pub fn is_take_only(&self) -> bool {
+        match self {
+            OrderPacket::PostOnly { .. } => false,
+            OrderPacket::Limit { .. } => false,
+            OrderPacket::ImmediateOrCancel { .. } => true,
+        }
+    }
+
     pub fn new_post_only_default(side: Side, price_in_ticks: u64, num_base_lots: u64) -> Self {
         Self::PostOnly {
             side,

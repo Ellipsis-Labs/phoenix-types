@@ -130,6 +130,9 @@ pub struct MarketHeader {
     /// The Pubkey of the market authority.
     pub authority: Pubkey,
 
+    /// The Pubkey of the fee destination.
+    pub fee_destination: Pubkey,
+
     /// The sequence number of the market.
     pub market_sequence_number: u64,
 

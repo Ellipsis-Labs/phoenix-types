@@ -127,7 +127,7 @@ pub fn create_new_order_instruction_with_custom_token_accounts(
 ) -> Instruction {
     let (base_vault, _) = get_vault_address(market, base);
     let (quote_vault, _) = get_vault_address(market, quote);
-    if let OrderPacket::ImmediateOrCancel { .. } = order_type {
+    if order_type.is_take_only() {
         Instruction {
             program_id: crate::id(),
             accounts: vec![
@@ -195,7 +195,7 @@ pub fn create_new_order_instruction_with_free_funds_with_custom_token_accounts(
             AccountMeta::new_readonly(seat, false),
         ],
         data: [
-            if let OrderPacket::ImmediateOrCancel { .. } = order_type {
+            if order_type.is_take_only() {
                 PhoenixInstruction::SwapWithFreeFunds.try_to_vec().unwrap()
             } else {
                 PhoenixInstruction::PlaceLimitOrderWithFreeFunds
@@ -221,11 +221,11 @@ pub fn create_deposit_funds_instruction(
     create_deposit_funds_instruction_with_custom_token_accounts(
         market,
         trader,
+        &seat,
         &base_account,
         &quote_account,
         base,
         quote,
-        &seat,
         params,
     )
 }
@@ -234,11 +234,11 @@ pub fn create_deposit_funds_instruction(
 pub fn create_deposit_funds_instruction_with_custom_token_accounts(
     market: &Pubkey,
     trader: &Pubkey,
+    seat: &Pubkey,
     base_account: &Pubkey,
     quote_account: &Pubkey,
     base: &Pubkey,
     quote: &Pubkey,
-    seat: &Pubkey,
     params: &DepositParams,
 ) -> Instruction {
     let (base_vault, _) = get_vault_address(market, base);
@@ -249,13 +249,13 @@ pub fn create_deposit_funds_instruction_with_custom_token_accounts(
         accounts: vec![
             AccountMeta::new(*market, false),
             AccountMeta::new(*trader, true),
+            AccountMeta::new_readonly(spl_noop::id(), false),
+            AccountMeta::new(*seat, false),
             AccountMeta::new(*base_account, false),
             AccountMeta::new(*quote_account, false),
             AccountMeta::new(base_vault, false),
             AccountMeta::new(quote_vault, false),
-            AccountMeta::new(*seat, false),
             AccountMeta::new_readonly(spl_token::id(), false),
-            AccountMeta::new_readonly(spl_noop::id(), false),
         ],
         data: [
             PhoenixInstruction::DepositFunds.try_to_vec().unwrap(),
