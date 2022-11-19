@@ -966,6 +966,7 @@ dependencies = [
  "pyo3",
  "serde",
  "solana-sdk",
+ "solders-macros",
  "solders-traits",
  "spl-associated-token-account",
  "spl-noop",
@@ -1558,6 +1559,16 @@ dependencies = [
  "subtle",
  "thiserror",
  "zeroize",
+]
+
+[[package]]
+name = "solders-macros"
+version = "0.10.0"
+source = "git+https://github.com/kevinheavey/solders?rev=ba153af#ba153afd5cedf19d62164f4384c57e724786eace"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

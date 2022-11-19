@@ -1,12 +1,19 @@
 use crate::enums::Side;
 use borsh::{BorshDeserialize, BorshSerialize};
 use bytemuck::{Pod, Zeroable};
-#[cfg(feature = "pyo3")]
-use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use sokoban::node_allocator::{NodeAllocatorMap, OrderedNodeAllocatorMap, ZeroCopy, SENTINEL};
 use sokoban::RedBlackTree;
 use solana_sdk::pubkey::Pubkey;
+#[cfg(feature = "pyo3")]
+use {
+    pyo3::prelude::*,
+    solders_macros::common_methods,
+    solders_traits::{
+        py_from_bytes_general_via_bincode, pybytes_general_via_bincode, CommonMethods,
+        PyBytesBincode, PyFromBytesBincode,
+    },
+};
 
 /// Representation of an order on the book.
 #[cfg_attr(feature = "pyo3", pyclass(get_all, set_all))]
@@ -20,6 +27,23 @@ pub struct LadderOrder {
 }
 
 #[cfg(feature = "pyo3")]
+macro_rules! common_methods_boilerplate {
+    ($name:ident) => {
+        impl std::fmt::Display for $name {
+            fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+                write!(f, "{:?}", self)
+            }
+        }
+        pybytes_general_via_bincode!($name);
+        py_from_bytes_general_via_bincode!($name);
+        impl CommonMethods<'_> for $name {}
+    };
+}
+
+common_methods_boilerplate!(LadderOrder);
+
+#[cfg(feature = "pyo3")]
+#[common_methods]
 #[pymethods]
 impl LadderOrder {
     #[new]
@@ -42,7 +66,10 @@ pub struct Ladder {
     pub asks: Vec<LadderOrder>,
 }
 
+common_methods_boilerplate!(Ladder);
+
 #[cfg(feature = "pyo3")]
+#[common_methods]
 #[pymethods]
 impl Ladder {
     #[new]
@@ -305,7 +332,10 @@ pub struct FIFOOrderId {
     pub order_sequence_number: u64,
 }
 
+common_methods_boilerplate!(FIFOOrderId);
+
 #[cfg(feature = "pyo3")]
+#[common_methods]
 #[pymethods]
 impl FIFOOrderId {
     #[pyo3(name = "new_from_untyped")]
