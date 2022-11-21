@@ -34,7 +34,7 @@ pub enum PhoenixInstruction {
     CancelAllOrders,
 
     /// Cancel multiple orders from the book based off a price
-    CancelMultipleOrders,
+    CancelUpTo,
 
     Instruction6,
 
@@ -62,6 +62,19 @@ pub enum PhoenixInstruction {
     SwapWithFreeFunds,
     /// Place a limit order on the book using only deposited funds.
     PlaceLimitOrderWithFreeFunds,
+
+    Instruction19,
+    /// Reduce the size of an existing order on the book (no token transfers)
+    ReduceOrderWithFreeFunds,
+
+    /// Cancel multiple orders by ID (no token transfers) 
+    CancelMultipleOrdersByIdWithFreeFunds,
+
+    /// Cancel all orders (no token transfers) 
+    CancelAllOrdersWithFreeFunds,
+
+    /// Cancel all orders more aggressive than a specified price (no token transfers) 
+    CancelUpToWithFreeFunds,
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Clone, Copy)]
@@ -78,7 +91,7 @@ pub struct ReduceOrderParams {
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Clone, Copy)]
-pub struct CancelMultipleOrdersParams {
+pub struct CancelUpToParams {
     pub side: Side,
     pub tick_limit: Option<u64>,
     pub num_orders_to_search: Option<u32>,
@@ -203,6 +216,89 @@ pub fn create_new_order_instruction_with_free_funds_with_custom_token_accounts(
                     .unwrap()
             },
             order_type.try_to_vec().unwrap(),
+        ]
+        .concat(),
+    }
+}
+
+pub fn create_cancel_all_order_with_free_funds_instruction(
+    market: &Pubkey,
+    trader: &Pubkey,
+) -> Instruction {
+    Instruction {
+        program_id: crate::id(),
+        accounts: vec![
+            AccountMeta::new(*market, false),
+            AccountMeta::new(*trader, true),
+            AccountMeta::new_readonly(spl_noop::id(), false),
+        ],
+        data: PhoenixInstruction::CancelAllOrdersWithFreeFunds
+            .try_to_vec()
+            .unwrap(),
+    }
+}
+
+pub fn create_cancel_up_to_with_free_funds_instruction(
+    market: &Pubkey,
+    trader: &Pubkey,
+    params: &CancelUpToParams,
+) -> Instruction {
+    Instruction {
+        program_id: crate::id(),
+        accounts: vec![
+            AccountMeta::new(*market, false),
+            AccountMeta::new(*trader, true),
+            AccountMeta::new_readonly(spl_noop::id(), false),
+        ],
+        data: [
+            PhoenixInstruction::CancelUpToWithFreeFunds
+                .try_to_vec()
+                .unwrap(),
+            params.try_to_vec().unwrap(),
+        ]
+        .concat(),
+    }
+}
+
+pub fn create_cancel_multiple_orders_by_id_with_free_funds_instruction(
+    market: &Pubkey,
+    trader: &Pubkey,
+    params: &CancelMultipleOrdersByIdParams,
+) -> Instruction {
+    Instruction {
+        program_id: crate::id(),
+        accounts: vec![
+            AccountMeta::new(*market, false),
+            AccountMeta::new(*trader, true),
+            AccountMeta::new_readonly(spl_noop::id(), false),
+        ],
+        data: [
+            PhoenixInstruction::CancelMultipleOrdersByIdWithFreeFunds
+                .try_to_vec()
+                .unwrap(),
+            params.try_to_vec().unwrap(),
+        ]
+        .concat(),
+    }
+}
+
+pub fn create_reduce_order_with_free_funds_instruction(
+    market: &Pubkey,
+    trader: &Pubkey,
+    params: &ReduceOrderParams,
+) -> Instruction {
+    Instruction {
+        program_id: crate::id(),
+        accounts: vec![
+            AccountMeta::new(*market, false),
+            AccountMeta::new(*trader, true),
+            AccountMeta::new_readonly(spl_noop::id(), false),
+        ],
+        data: [
+            PhoenixInstruction::ReduceOrderWithFreeFunds
+                .try_to_vec()
+                .unwrap(),
+            params.try_to_vec().unwrap(),
         ]
         .concat(),
     }
@@ -403,16 +499,16 @@ pub fn create_cancel_all_orders_instruction_with_custom_token_accounts(
     )
 }
 
-pub fn create_cancel_multiple_orders_instruction(
+pub fn create_cancel_up_to_instruction(
     market: &Pubkey,
     trader: &Pubkey,
     base: &Pubkey,
     quote: &Pubkey,
-    params: &CancelMultipleOrdersParams,
+    params: &CancelUpToParams,
 ) -> Instruction {
     let base_account = get_associated_token_address(trader, base);
     let quote_account = get_associated_token_address(trader, quote);
-    create_cancel_multiple_orders_instruction_with_custom_token_accounts(
+    create_cancel_up_to_instruction_with_custom_token_accounts(
         market,
         trader,
         &base_account,
@@ -423,23 +519,23 @@ pub fn create_cancel_multiple_orders_instruction(
     )
 }
 
-pub fn create_cancel_multiple_orders_instruction_with_custom_token_accounts(
+pub fn create_cancel_up_to_instruction_with_custom_token_accounts(
     market: &Pubkey,
     trader: &Pubkey,
     base_account: &Pubkey,
     quote_account: &Pubkey,
     base: &Pubkey,
     quote: &Pubkey,
-    params: &CancelMultipleOrdersParams,
+    params: &CancelUpToParams,
 ) -> Instruction {
-    _phoenix_instruction_template::<CancelMultipleOrdersParams>(
+    _phoenix_instruction_template::<CancelUpToParams>(
         market,
         trader,
         base_account,
         quote_account,
         base,
         quote,
-        PhoenixInstruction::CancelMultipleOrders,
+        PhoenixInstruction::CancelUpTo,
         Some(params),
     )
 }
