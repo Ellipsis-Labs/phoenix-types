@@ -8,7 +8,7 @@ license = "MIT OR Apache-2.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-pyo3 = ["dep:pyo3"]
+pyo3 = ["dep:pyo3", "dep:solders-traits", "dep:solders-macros"]
 
 [dependencies]
 lib-sokoban = "0.1.13" 
@@ -20,3 +20,6 @@ spl-token = { version = "3.2.0", features = ["no-entrypoint"] }
 spl-associated-token-account = { version = "1.1.1", features = [ "no-entrypoint" ] }
 spl-noop = { version = "=0.1.0", features = [ "no-entrypoint" ] }
 pyo3 = { git = "https://github.com/PyO3/pyo3", rev = "1d20f2a", optional = true }
+solders-traits = { git = "https://github.com/kevinheavey/solders", rev = "ba153af", optional = true }
+solders-macros = { git = "https://github.com/kevinheavey/solders", rev = "ba153af", optional = true }
+serde = { version = "1.0.147", features = ["derive"] }
