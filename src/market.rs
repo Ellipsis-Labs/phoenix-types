@@ -166,12 +166,9 @@ pub struct MarketHeader {
     /// The sequence number of the market.
     pub market_sequence_number: u64,
 
+    pub successor: Pubkey,
     _padding1: u64,
     _padding2: u64,
-    _padding3: u64,
-    _padding4: u64,
-    _padding5: u64,
-    _padding6: u64,
 }
 impl ZeroCopy for MarketHeader {}
 

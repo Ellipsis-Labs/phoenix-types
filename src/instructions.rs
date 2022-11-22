@@ -1,6 +1,7 @@
 use crate::enums::Side;
 use crate::order_packet::OrderPacket;
 use borsh::{BorshDeserialize, BorshSerialize};
+use shank::ShankInstruction;
 use solana_sdk::{
     instruction::{AccountMeta, Instruction},
     pubkey::Pubkey,
@@ -16,65 +17,143 @@ pub fn get_seat_address(market: &Pubkey, trader: &Pubkey) -> (Pubkey, u8) {
     Pubkey::find_program_address(&[b"seat", market.as_ref(), trader.as_ref()], &crate::ID)
 }
 
-#[derive(Debug, Copy, Clone, BorshSerialize, BorshDeserialize)]
+#[derive(Debug, Copy, Clone, ShankInstruction, BorshSerialize, BorshDeserialize)]
 #[rustfmt::skip]
 pub enum PhoenixInstruction {
-    Instruction0,
+    // Market instructions
+    /// Send a swap (no limit orders allowed) order
+    #[account(0, writable, name = "market", desc = "This account holds the market state")]
+    #[account(1, writable, signer, name = "trader")]
+    #[account(2, name = "wrapper_program", desc = "No-op wrapper program")]
+    #[account(3, writable, name = "base_account", desc = "Trader base token account")]
+    #[account(4, writable, name = "quote_account", desc = "Trader quote token account")]
+    #[account(5, writable, name = "base_vault", desc = "Base vault PDA, seeds are [b'vault', market_address, base_mint_address]")]
+    #[account(6, writable, name = "quote_vault", desc = "Quote vault PDA, seeds are [b'vault', market_address, quote_mint_address]")]
+    #[account(7, name = "token_program", desc = "Token program")]
+    Swap = 0,
 
-    /// Send a swap (cross) order
-    Swap,
+    /// Send a swap (no limit orders allowed) order using only deposited funds
+    #[account(0, writable, name = "market", desc = "This account holds the market state")]
+    #[account(1, writable, signer, name = "trader")]
+    #[account(2, name = "wrapper_program", desc = "No-op wrapper program")]
+    #[account(3, name = "seat")]
+    SwapWithFreeFunds = 1,
 
     /// Place a limit order on the book. The order can cross if the supplied order type is Limit
-    PlaceLimitOrder,
+    #[account(0, writable, name = "market", desc = "This account holds the market state")]
+    #[account(1, writable, signer, name = "trader")]
+    #[account(2, name = "wrapper_program", desc = "No-op wrapper program")]
+    #[account(3, name = "seat")]
+    #[account(4, writable, name = "base_account", desc = "Trader base token account")]
+    #[account(5, writable, name = "quote_account", desc = "Trader quote token account")]
+    #[account(6, writable, name = "base_vault", desc = "Base vault PDA, seeds are [b'vault', market_address, base_mint_address]")]
+    #[account(7, writable, name = "quote_vault", desc = "Quote vault PDA, seeds are [b'vault', market_address, quote_mint_address]")]
+    #[account(8, name = "token_program", desc = "Token program")]
+    PlaceLimitOrder = 2,
+
+    /// Place a limit order on the book using only deposited funds.
+    #[account(0, writable, name = "market", desc = "This account holds the market state")]
+    #[account(1, writable, signer, name = "trader")]
+    #[account(2, name = "wrapper_program", desc = "No-op wrapper program")]
+    #[account(3, name = "seat")]
+    PlaceLimitOrderWithFreeFunds = 3,
 
     /// Reduce the size of an existing order on the book 
-    ReduceOrder,
+    #[account(0, writable, name = "market", desc = "This account holds the market state")]
+    #[account(1, writable, signer, name = "trader")]
+    #[account(2, name = "wrapper_program", desc = "No-op wrapper program")]
+    #[account(3, writable, name = "base_account", desc = "Trader base token account")]
+    #[account(4, writable, name = "quote_account", desc = "Trader quote token account")]
+    #[account(5, writable, name = "base_vault", desc = "Base vault PDA, seeds are [b'vault', market_address, base_mint_address]")]
+    #[account(6, writable, name = "quote_vault", desc = "Quote vault PDA, seeds are [b'vault', market_address, quote_mint_address]")]
+    #[account(7, name = "token_program", desc = "Token program")]
+    ReduceOrder = 4,
 
-    /// Cancel all of a user's orders from the book
-    CancelAllOrders,
+    /// Reduce the size of an existing order on the book 
+    #[account(0, writable, name = "market", desc = "This account holds the market state")]
+    #[account(1, writable, signer, name = "trader")]
+    #[account(2, name = "wrapper_program", desc = "No-op wrapper program")]
+    ReduceOrderWithFreeFunds = 5,
 
-    /// Cancel multiple orders from the book based off a price
-    CancelUpTo,
 
-    Instruction6,
-
-    /// Remove multiple orders from the book based off id
-    CancelMultipleOrdersById,
-
-    /// Withdraw funds from the vault 
-    WithdrawFunds,
-
-    /// Deposit funds into the vault 
-    DepositFunds,
-
-    Instruction10,
-    Instruction11,
-    Instruction12,
-    Instruction13,
-    Instruction14,
-    Instruction15,
-
-    /// Request a seat on the market. The exchange authority will need to approve your seat
-    RequestSeat,
-    
-    Instruction16,
-    /// Send a swap order only using previously deposited funds. Need a seat to do this.
-    SwapWithFreeFunds,
-    /// Place a limit order on the book using only deposited funds.
-    PlaceLimitOrderWithFreeFunds,
-
-    Instruction19,
-    /// Reduce the size of an existing order on the book (no token transfers)
-    ReduceOrderWithFreeFunds,
-
-    /// Cancel multiple orders by ID (no token transfers) 
-    CancelMultipleOrdersByIdWithFreeFunds,
+    /// Cancel all orders 
+    #[account(0, writable, name = "market", desc = "This account holds the market state")]
+    #[account(1, writable, signer, name = "trader")]
+    #[account(2, name = "wrapper_program", desc = "No-op wrapper program")]
+    #[account(3, writable, name = "base_account", desc = "Trader base token account")]
+    #[account(4, writable, name = "quote_account", desc = "Trader quote token account")]
+    #[account(5, writable, name = "base_vault", desc = "Base vault PDA, seeds are [b'vault', market_address, base_mint_address]")]
+    #[account(6, writable, name = "quote_vault", desc = "Quote vault PDA, seeds are [b'vault', market_address, quote_mint_address]")]
+    #[account(7, name = "token_program", desc = "Token program")]
+    CancelAllOrders = 6,
 
     /// Cancel all orders (no token transfers) 
-    CancelAllOrdersWithFreeFunds,
+    #[account(0, writable, name = "market", desc = "This account holds the market state")]
+    #[account(1, writable, signer, name = "trader")]
+    #[account(2, name = "wrapper_program", desc = "No-op wrapper program")]
+    CancelAllOrdersWithFreeFunds = 7,
+
+    /// Cancel all orders more aggressive than a specified price
+    #[account(0, writable, name = "market", desc = "This account holds the market state")]
+    #[account(1, writable, signer, name = "trader")]
+    #[account(2, name = "wrapper_program", desc = "No-op wrapper program")]
+    #[account(3, writable, name = "base_account", desc = "Trader base token account")]
+    #[account(4, writable, name = "quote_account", desc = "Trader quote token account")]
+    #[account(5, writable, name = "base_vault", desc = "Base vault PDA, seeds are [b'vault', market_address, base_mint_address]")]
+    #[account(6, writable, name = "quote_vault", desc = "Quote vault PDA, seeds are [b'vault', market_address, quote_mint_address]")]
+    #[account(7, name = "token_program", desc = "Token program")]
+    CancelUpTo = 8,
+
 
     /// Cancel all orders more aggressive than a specified price (no token transfers) 
-    CancelUpToWithFreeFunds,
+    #[account(0, writable, name = "market", desc = "This account holds the market state")]
+    #[account(1, writable, signer, name = "trader")]
+    #[account(2, name = "wrapper_program", desc = "No-op wrapper program")]
+    CancelUpToWithFreeFunds = 9,
+
+    /// Cancel multiple orders by ID 
+    #[account(0, writable, name = "market", desc = "This account holds the market state")]
+    #[account(1, writable, signer, name = "trader")]
+    #[account(2, name = "wrapper_program", desc = "No-op wrapper program")]
+    #[account(3, writable, name = "base_account", desc = "Trader base token account")]
+    #[account(4, writable, name = "quote_account", desc = "Trader quote token account")]
+    #[account(5, writable, name = "base_vault", desc = "Base vault PDA, seeds are [b'vault', market_address, base_mint_address]")]
+    #[account(6, writable, name = "quote_vault", desc = "Quote vault PDA, seeds are [b'vault', market_address, quote_mint_address]")]
+    #[account(7, name = "token_program", desc = "Token program")]
+    CancelMultipleOrdersById = 10,
+
+    /// Cancel multiple orders by ID (no token transfers) 
+    #[account(0, writable, name = "market", desc = "This account holds the market state")]
+    #[account(1, writable, signer, name = "trader")]
+    #[account(2, name = "wrapper_program", desc = "No-op wrapper program")]
+    CancelMultipleOrdersByIdWithFreeFunds = 11,
+
+    #[account(0, writable, name = "market", desc = "This account holds the market state")]
+    #[account(1, writable, signer, name = "trader")]
+    #[account(2, name = "wrapper_program", desc = "No-op wrapper program")]
+    #[account(3, writable, name = "base_account", desc = "Trader base token account")]
+    #[account(4, writable, name = "quote_account", desc = "Trader quote token account")]
+    #[account(5, writable, name = "base_vault", desc = "Base vault PDA, seeds are [b'vault', market_address, base_mint_address]")]
+    #[account(6, writable, name = "quote_vault", desc = "Quote vault PDA, seeds are [b'vault', market_address, quote_mint_address]")]
+    #[account(7, name = "token_program", desc = "Token program")]
+    WithdrawFunds = 12,
+
+    #[account(0, writable, name = "market", desc = "This account holds the market state")]
+    #[account(1, writable, signer, name = "trader")]
+    #[account(2, name = "wrapper_program", desc = "No-op wrapper program")]
+    #[account(3, name = "seat")]
+    #[account(4, writable, name = "base_account", desc = "Trader base token account")]
+    #[account(5, writable, name = "quote_account", desc = "Trader quote token account")]
+    #[account(6, writable, name = "base_vault", desc = "Base vault PDA, seeds are [b'vault', market_address, base_mint_address]")]
+    #[account(7, writable, name = "quote_vault", desc = "Quote vault PDA, seeds are [b'vault', market_address, quote_mint_address]")]
+    #[account(8, name = "token_program", desc = "Token program")]
+    DepositFunds = 13,
+
+    #[account(0, writable, signer, name = "payer")]
+    #[account(1, name = "market")]
+    #[account(2, writable, name = "seat")]
+    #[account(3, name = "system_program", desc = "System program")]
+    RequestSeat = 14,
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Clone, Copy)]
