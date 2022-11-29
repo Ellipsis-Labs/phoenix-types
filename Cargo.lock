@@ -717,9 +717,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "lib-sokoban"
-version = "0.2.1"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "45df63b124d73d4a32f81223457aef94e28f7274bbe8dbdf1ba0b6205195520c"
+checksum = "6aeaf94eac2c45027b15a667b2ce07f191599981019e017354f737f02e8dc9fe"
 dependencies = [
  "bytemuck",
  "num-derive",
