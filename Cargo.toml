@@ -11,7 +11,7 @@ license = "MIT OR Apache-2.0"
 pyo3 = ["dep:pyo3", "dep:solders-traits", "dep:solders-macros"]
 
 [dependencies]
-lib-sokoban = "0.2.3" 
+lib-sokoban = "0.2.4" 
 bytemuck = "1.11.0"
 thiserror = "^1.0.24"
 solana-sdk = "1.10.32"
