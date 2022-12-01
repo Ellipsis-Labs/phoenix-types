@@ -1,5 +1,5 @@
-use crate::enums::Side;
 use crate::order_packet::OrderPacket;
+use crate::{enums::Side, phoenix_log_authority};
 use borsh::{BorshDeserialize, BorshSerialize};
 use shank::ShankInstruction;
 use solana_sdk::{
@@ -20,140 +20,156 @@ pub fn get_seat_address(market: &Pubkey, trader: &Pubkey) -> (Pubkey, u8) {
 #[derive(Debug, Copy, Clone, ShankInstruction, BorshSerialize, BorshDeserialize)]
 #[rustfmt::skip]
 pub enum PhoenixInstruction {
-    // Market instructions
     /// Send a swap (no limit orders allowed) order
     #[account(0, writable, name = "market", desc = "This account holds the market state")]
     #[account(1, writable, signer, name = "trader")]
-    #[account(2, name = "wrapper_program", desc = "No-op wrapper program")]
-    #[account(3, writable, name = "base_account", desc = "Trader base token account")]
-    #[account(4, writable, name = "quote_account", desc = "Trader quote token account")]
-    #[account(5, writable, name = "base_vault", desc = "Base vault PDA, seeds are [b'vault', market_address, base_mint_address]")]
-    #[account(6, writable, name = "quote_vault", desc = "Quote vault PDA, seeds are [b'vault', market_address, quote_mint_address]")]
-    #[account(7, name = "token_program", desc = "Token program")]
-    Swap = 0,
-
-    /// Send a swap (no limit orders allowed) order using only deposited funds
-    #[account(0, writable, name = "market", desc = "This account holds the market state")]
-    #[account(1, writable, signer, name = "trader")]
-    #[account(2, name = "wrapper_program", desc = "No-op wrapper program")]
-    #[account(3, name = "seat")]
-    SwapWithFreeFunds = 1,
-
-    /// Place a limit order on the book. The order can cross if the supplied order type is Limit
-    #[account(0, writable, name = "market", desc = "This account holds the market state")]
-    #[account(1, writable, signer, name = "trader")]
-    #[account(2, name = "wrapper_program", desc = "No-op wrapper program")]
-    #[account(3, name = "seat")]
+    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
     #[account(4, writable, name = "base_account", desc = "Trader base token account")]
     #[account(5, writable, name = "quote_account", desc = "Trader quote token account")]
     #[account(6, writable, name = "base_vault", desc = "Base vault PDA, seeds are [b'vault', market_address, base_mint_address]")]
     #[account(7, writable, name = "quote_vault", desc = "Quote vault PDA, seeds are [b'vault', market_address, quote_mint_address]")]
     #[account(8, name = "token_program", desc = "Token program")]
+    Swap = 0,
+
+    /// Send a swap (no limit orders allowed) order using only deposited funds
+    #[account(0, writable, name = "market", desc = "This account holds the market state")]
+    #[account(1, writable, signer, name = "trader")]
+    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(4, name = "seat")]
+    SwapWithFreeFunds = 1,
+
+    /// Place a limit order on the book. The order can cross if the supplied order type is Limit
+    #[account(0, writable, name = "market", desc = "This account holds the market state")]
+    #[account(1, writable, signer, name = "trader")]
+    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(4, name = "seat")]
+    #[account(5, writable, name = "base_account", desc = "Trader base token account")]
+    #[account(6, writable, name = "quote_account", desc = "Trader quote token account")]
+    #[account(7, writable, name = "base_vault", desc = "Base vault PDA, seeds are [b'vault', market_address, base_mint_address]")]
+    #[account(8, writable, name = "quote_vault", desc = "Quote vault PDA, seeds are [b'vault', market_address, quote_mint_address]")]
+    #[account(9, name = "token_program", desc = "Token program")]
     PlaceLimitOrder = 2,
 
     /// Place a limit order on the book using only deposited funds.
     #[account(0, writable, name = "market", desc = "This account holds the market state")]
     #[account(1, writable, signer, name = "trader")]
-    #[account(2, name = "wrapper_program", desc = "No-op wrapper program")]
-    #[account(3, name = "seat")]
+    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(4, name = "seat")]
     PlaceLimitOrderWithFreeFunds = 3,
 
     /// Reduce the size of an existing order on the book 
     #[account(0, writable, name = "market", desc = "This account holds the market state")]
     #[account(1, writable, signer, name = "trader")]
-    #[account(2, name = "wrapper_program", desc = "No-op wrapper program")]
-    #[account(3, writable, name = "base_account", desc = "Trader base token account")]
-    #[account(4, writable, name = "quote_account", desc = "Trader quote token account")]
-    #[account(5, writable, name = "base_vault", desc = "Base vault PDA, seeds are [b'vault', market_address, base_mint_address]")]
-    #[account(6, writable, name = "quote_vault", desc = "Quote vault PDA, seeds are [b'vault', market_address, quote_mint_address]")]
-    #[account(7, name = "token_program", desc = "Token program")]
+    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(4, writable, name = "base_account", desc = "Trader base token account")]
+    #[account(5, writable, name = "quote_account", desc = "Trader quote token account")]
+    #[account(6, writable, name = "base_vault", desc = "Base vault PDA, seeds are [b'vault', market_address, base_mint_address]")]
+    #[account(7, writable, name = "quote_vault", desc = "Quote vault PDA, seeds are [b'vault', market_address, quote_mint_address]")]
+    #[account(8, name = "token_program", desc = "Token program")]
     ReduceOrder = 4,
 
     /// Reduce the size of an existing order on the book 
     #[account(0, writable, name = "market", desc = "This account holds the market state")]
     #[account(1, writable, signer, name = "trader")]
-    #[account(2, name = "wrapper_program", desc = "No-op wrapper program")]
+    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
     ReduceOrderWithFreeFunds = 5,
 
 
     /// Cancel all orders 
     #[account(0, writable, name = "market", desc = "This account holds the market state")]
     #[account(1, writable, signer, name = "trader")]
-    #[account(2, name = "wrapper_program", desc = "No-op wrapper program")]
-    #[account(3, writable, name = "base_account", desc = "Trader base token account")]
-    #[account(4, writable, name = "quote_account", desc = "Trader quote token account")]
-    #[account(5, writable, name = "base_vault", desc = "Base vault PDA, seeds are [b'vault', market_address, base_mint_address]")]
-    #[account(6, writable, name = "quote_vault", desc = "Quote vault PDA, seeds are [b'vault', market_address, quote_mint_address]")]
-    #[account(7, name = "token_program", desc = "Token program")]
+    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(4, writable, name = "base_account", desc = "Trader base token account")]
+    #[account(5, writable, name = "quote_account", desc = "Trader quote token account")]
+    #[account(6, writable, name = "base_vault", desc = "Base vault PDA, seeds are [b'vault', market_address, base_mint_address]")]
+    #[account(7, writable, name = "quote_vault", desc = "Quote vault PDA, seeds are [b'vault', market_address, quote_mint_address]")]
+    #[account(8, name = "token_program", desc = "Token program")]
     CancelAllOrders = 6,
 
     /// Cancel all orders (no token transfers) 
     #[account(0, writable, name = "market", desc = "This account holds the market state")]
     #[account(1, writable, signer, name = "trader")]
-    #[account(2, name = "wrapper_program", desc = "No-op wrapper program")]
+    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
     CancelAllOrdersWithFreeFunds = 7,
 
     /// Cancel all orders more aggressive than a specified price
     #[account(0, writable, name = "market", desc = "This account holds the market state")]
     #[account(1, writable, signer, name = "trader")]
-    #[account(2, name = "wrapper_program", desc = "No-op wrapper program")]
-    #[account(3, writable, name = "base_account", desc = "Trader base token account")]
-    #[account(4, writable, name = "quote_account", desc = "Trader quote token account")]
-    #[account(5, writable, name = "base_vault", desc = "Base vault PDA, seeds are [b'vault', market_address, base_mint_address]")]
-    #[account(6, writable, name = "quote_vault", desc = "Quote vault PDA, seeds are [b'vault', market_address, quote_mint_address]")]
-    #[account(7, name = "token_program", desc = "Token program")]
+    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(4, writable, name = "base_account", desc = "Trader base token account")]
+    #[account(5, writable, name = "quote_account", desc = "Trader quote token account")]
+    #[account(6, writable, name = "base_vault", desc = "Base vault PDA, seeds are [b'vault', market_address, base_mint_address]")]
+    #[account(7, writable, name = "quote_vault", desc = "Quote vault PDA, seeds are [b'vault', market_address, quote_mint_address]")]
+    #[account(8, name = "token_program", desc = "Token program")]
     CancelUpTo = 8,
 
 
     /// Cancel all orders more aggressive than a specified price (no token transfers) 
     #[account(0, writable, name = "market", desc = "This account holds the market state")]
     #[account(1, writable, signer, name = "trader")]
-    #[account(2, name = "wrapper_program", desc = "No-op wrapper program")]
+    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
     CancelUpToWithFreeFunds = 9,
 
     /// Cancel multiple orders by ID 
     #[account(0, writable, name = "market", desc = "This account holds the market state")]
     #[account(1, writable, signer, name = "trader")]
-    #[account(2, name = "wrapper_program", desc = "No-op wrapper program")]
-    #[account(3, writable, name = "base_account", desc = "Trader base token account")]
-    #[account(4, writable, name = "quote_account", desc = "Trader quote token account")]
-    #[account(5, writable, name = "base_vault", desc = "Base vault PDA, seeds are [b'vault', market_address, base_mint_address]")]
-    #[account(6, writable, name = "quote_vault", desc = "Quote vault PDA, seeds are [b'vault', market_address, quote_mint_address]")]
-    #[account(7, name = "token_program", desc = "Token program")]
-    CancelMultipleOrdersById = 10,
-
-    /// Cancel multiple orders by ID (no token transfers) 
-    #[account(0, writable, name = "market", desc = "This account holds the market state")]
-    #[account(1, writable, signer, name = "trader")]
-    #[account(2, name = "wrapper_program", desc = "No-op wrapper program")]
-    CancelMultipleOrdersByIdWithFreeFunds = 11,
-
-    #[account(0, writable, name = "market", desc = "This account holds the market state")]
-    #[account(1, writable, signer, name = "trader")]
-    #[account(2, name = "wrapper_program", desc = "No-op wrapper program")]
-    #[account(3, writable, name = "base_account", desc = "Trader base token account")]
-    #[account(4, writable, name = "quote_account", desc = "Trader quote token account")]
-    #[account(5, writable, name = "base_vault", desc = "Base vault PDA, seeds are [b'vault', market_address, base_mint_address]")]
-    #[account(6, writable, name = "quote_vault", desc = "Quote vault PDA, seeds are [b'vault', market_address, quote_mint_address]")]
-    #[account(7, name = "token_program", desc = "Token program")]
-    WithdrawFunds = 12,
-
-    #[account(0, writable, name = "market", desc = "This account holds the market state")]
-    #[account(1, writable, signer, name = "trader")]
-    #[account(2, name = "wrapper_program", desc = "No-op wrapper program")]
-    #[account(3, name = "seat")]
+    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
     #[account(4, writable, name = "base_account", desc = "Trader base token account")]
     #[account(5, writable, name = "quote_account", desc = "Trader quote token account")]
     #[account(6, writable, name = "base_vault", desc = "Base vault PDA, seeds are [b'vault', market_address, base_mint_address]")]
     #[account(7, writable, name = "quote_vault", desc = "Quote vault PDA, seeds are [b'vault', market_address, quote_mint_address]")]
     #[account(8, name = "token_program", desc = "Token program")]
+    CancelMultipleOrdersById = 10,
+
+    /// Cancel multiple orders by ID (no token transfers) 
+    #[account(0, writable, name = "market", desc = "This account holds the market state")]
+    #[account(1, writable, signer, name = "trader")]
+    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
+    CancelMultipleOrdersByIdWithFreeFunds = 11,
+
+    #[account(0, writable, name = "market", desc = "This account holds the market state")]
+    #[account(1, writable, signer, name = "trader")]
+    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(4, writable, name = "base_account", desc = "Trader base token account")]
+    #[account(5, writable, name = "quote_account", desc = "Trader quote token account")]
+    #[account(6, writable, name = "base_vault", desc = "Base vault PDA, seeds are [b'vault', market_address, base_mint_address]")]
+    #[account(7, writable, name = "quote_vault", desc = "Quote vault PDA, seeds are [b'vault', market_address, quote_mint_address]")]
+    #[account(8, name = "token_program", desc = "Token program")]
+    WithdrawFunds = 12,
+
+    #[account(0, writable, name = "market", desc = "This account holds the market state")]
+    #[account(1, writable, signer, name = "trader")]
+    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(4, name = "seat")]
+    #[account(5, writable, name = "base_account", desc = "Trader base token account")]
+    #[account(6, writable, name = "quote_account", desc = "Trader quote token account")]
+    #[account(7, writable, name = "base_vault", desc = "Base vault PDA, seeds are [b'vault', market_address, base_mint_address]")]
+    #[account(8, writable, name = "quote_vault", desc = "Quote vault PDA, seeds are [b'vault', market_address, quote_mint_address]")]
+    #[account(9, name = "token_program", desc = "Token program")]
     DepositFunds = 13,
 
     #[account(0, writable, signer, name = "payer")]
-    #[account(1, name = "market")]
+    #[account(1, writable, name = "market")]
     #[account(2, writable, name = "seat")]
     #[account(3, name = "system_program", desc = "System program")]
     RequestSeat = 14,
+
+    #[account(0, signer, name = "log_authority", desc = "Log authority")]
+    Log = 15,
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Clone, Copy)]
@@ -225,7 +241,8 @@ pub fn create_new_order_instruction_with_custom_token_accounts(
             accounts: vec![
                 AccountMeta::new(*market, false),
                 AccountMeta::new(*trader, true),
-                AccountMeta::new_readonly(spl_noop::id(), false),
+                AccountMeta::new_readonly(phoenix_log_authority::id(), false),
+                AccountMeta::new_readonly(crate::id(), false),
                 AccountMeta::new(*base_account, false),
                 AccountMeta::new(*quote_account, false),
                 AccountMeta::new(base_vault, false),
@@ -245,7 +262,8 @@ pub fn create_new_order_instruction_with_custom_token_accounts(
             accounts: vec![
                 AccountMeta::new(*market, false),
                 AccountMeta::new(*trader, true),
-                AccountMeta::new_readonly(spl_noop::id(), false),
+                AccountMeta::new_readonly(phoenix_log_authority::id(), false),
+                AccountMeta::new_readonly(crate::id(), false),
                 AccountMeta::new_readonly(seat, false),
                 AccountMeta::new(*base_account, false),
                 AccountMeta::new(*quote_account, false),
@@ -283,7 +301,8 @@ pub fn create_new_order_instruction_with_free_funds_with_custom_token_accounts(
         accounts: vec![
             AccountMeta::new(*market, false),
             AccountMeta::new(*trader, true),
-            AccountMeta::new_readonly(spl_noop::id(), false),
+            AccountMeta::new_readonly(phoenix_log_authority::id(), false),
+            AccountMeta::new_readonly(crate::id(), false),
             AccountMeta::new_readonly(seat, false),
         ],
         data: [
@@ -309,7 +328,8 @@ pub fn create_cancel_all_order_with_free_funds_instruction(
         accounts: vec![
             AccountMeta::new(*market, false),
             AccountMeta::new(*trader, true),
-            AccountMeta::new_readonly(spl_noop::id(), false),
+            AccountMeta::new_readonly(phoenix_log_authority::id(), false),
+            AccountMeta::new_readonly(crate::id(), false),
         ],
         data: PhoenixInstruction::CancelAllOrdersWithFreeFunds
             .try_to_vec()
@@ -327,7 +347,8 @@ pub fn create_cancel_up_to_with_free_funds_instruction(
         accounts: vec![
             AccountMeta::new(*market, false),
             AccountMeta::new(*trader, true),
-            AccountMeta::new_readonly(spl_noop::id(), false),
+            AccountMeta::new_readonly(phoenix_log_authority::id(), false),
+            AccountMeta::new_readonly(crate::id(), false),
         ],
         data: [
             PhoenixInstruction::CancelUpToWithFreeFunds
@@ -349,7 +370,8 @@ pub fn create_cancel_multiple_orders_by_id_with_free_funds_instruction(
         accounts: vec![
             AccountMeta::new(*market, false),
             AccountMeta::new(*trader, true),
-            AccountMeta::new_readonly(spl_noop::id(), false),
+            AccountMeta::new_readonly(phoenix_log_authority::id(), false),
+            AccountMeta::new_readonly(crate::id(), false),
         ],
         data: [
             PhoenixInstruction::CancelMultipleOrdersByIdWithFreeFunds
@@ -371,7 +393,8 @@ pub fn create_reduce_order_with_free_funds_instruction(
         accounts: vec![
             AccountMeta::new(*market, false),
             AccountMeta::new(*trader, true),
-            AccountMeta::new_readonly(spl_noop::id(), false),
+            AccountMeta::new_readonly(phoenix_log_authority::id(), false),
+            AccountMeta::new_readonly(crate::id(), false),
         ],
         data: [
             PhoenixInstruction::ReduceOrderWithFreeFunds
@@ -424,7 +447,8 @@ pub fn create_deposit_funds_instruction_with_custom_token_accounts(
         accounts: vec![
             AccountMeta::new(*market, false),
             AccountMeta::new(*trader, true),
-            AccountMeta::new_readonly(spl_noop::id(), false),
+            AccountMeta::new_readonly(phoenix_log_authority::id(), false),
+            AccountMeta::new_readonly(crate::id(), false),
             AccountMeta::new(*seat, false),
             AccountMeta::new(*base_account, false),
             AccountMeta::new(*quote_account, false),
@@ -462,7 +486,8 @@ fn _phoenix_instruction_template<T: BorshSerialize>(
         accounts: vec![
             AccountMeta::new(*market, false),
             AccountMeta::new(*trader, true),
-            AccountMeta::new_readonly(spl_noop::id(), false),
+            AccountMeta::new_readonly(phoenix_log_authority::id(), false),
+            AccountMeta::new_readonly(crate::id(), false),
             AccountMeta::new(*base_account, false),
             AccountMeta::new(*quote_account, false),
             AccountMeta::new(base_vault, false),
@@ -489,7 +514,8 @@ fn _phoenix_instruction_template_no_param(
         accounts: vec![
             AccountMeta::new(*market, false),
             AccountMeta::new(*trader, true),
-            AccountMeta::new_readonly(spl_noop::id(), false),
+            AccountMeta::new_readonly(phoenix_log_authority::id(), false),
+            AccountMeta::new_readonly(crate::id(), false),
             AccountMeta::new(*base_account, false),
             AccountMeta::new(*quote_account, false),
             AccountMeta::new(base_vault, false),
@@ -703,7 +729,7 @@ pub fn create_request_seat_instruction(payer: &Pubkey, market: &Pubkey) -> Instr
         program_id: crate::id(),
         accounts: vec![
             AccountMeta::new(*payer, true),
-            AccountMeta::new_readonly(*market, false),
+            AccountMeta::new(*market, false),
             AccountMeta::new(seat, false),
             AccountMeta::new_readonly(system_program::id(), false),
         ],
