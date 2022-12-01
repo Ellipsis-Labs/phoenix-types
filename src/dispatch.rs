@@ -1,4 +1,4 @@
-use crate::market::{FIFOMarket, Market, MarketParams};
+use crate::market::{FIFOMarket, Market, MarketSizeParams};
 use sokoban::node_allocator::ZeroCopy;
 
 /// Struct that holds an object implementing the Market trait.
@@ -14,20 +14,20 @@ impl<'a> MarketWrapper<'a> {
 
 /// Loads a market from a given buffer and known market params.
 pub fn load_with_dispatch_mut<'a>(
-    market_params: &'a MarketParams,
+    market_size_params: &'a MarketSizeParams,
     bytes: &'a mut [u8],
 ) -> Option<MarketWrapper<'a>> {
-    dispatch_market_mut(market_params, bytes)
+    dispatch_market_mut(market_size_params, bytes)
 }
 
 fn dispatch_market_mut<'a>(
-    market_params: &'a MarketParams,
+    market_size_params: &'a MarketSizeParams,
     bytes: &'a mut [u8],
 ) -> Option<MarketWrapper<'a>> {
     let market = match (
-        market_params.bids_size,
-        market_params.asks_size,
-        market_params.num_seats,
+        market_size_params.bids_size,
+        market_size_params.asks_size,
+        market_size_params.num_seats,
     ) {
         (512, 512, 256) => FIFOMarket::<512, 512, 256>::load_mut_bytes(bytes)? as &mut dyn Market,
         (2048, 2048, 4096) => {
@@ -54,7 +54,7 @@ fn dispatch_market_mut<'a>(
 }
 
 /// Returns the size of a market in bytes, given the market params.
-pub fn get_market_size(market_params: &MarketParams) -> Option<usize> {
+pub fn get_market_size(market_params: &MarketSizeParams) -> Option<usize> {
     let size = match (
         market_params.bids_size,
         market_params.asks_size,
