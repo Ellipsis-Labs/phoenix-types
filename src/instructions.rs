@@ -159,8 +159,8 @@ pub enum PhoenixInstruction {
 #[derive(BorshDeserialize, BorshSerialize, Clone, Copy)]
 pub struct CancelOrderParams {
     pub side: Side,
-    pub num_quote_ticks_per_base_unit: u64,
-    pub order_id: u64,
+    pub price_in_ticks: u64,
+    pub order_sequence_number: u64,
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Clone, Copy)]

@@ -9,8 +9,8 @@ pub enum OrderPacket {
     PostOnly {
         side: Side,
 
-        /// The price of the order in quote ticks per base unit
-        num_quote_ticks_per_base_unit: u64,
+        /// The price of the order, in ticks
+        price_in_ticks: u64,
 
         /// Number of base lots to place on the book
         num_base_lots: u64,
@@ -32,8 +32,8 @@ pub enum OrderPacket {
     Limit {
         side: Side,
 
-        /// The price of the order in quote ticks per base unit
-        num_quote_ticks_per_base_unit: u64,
+        /// The price of the order, in ticks
+        price_in_ticks: u64,
 
         /// Total number of base lots to place on the book or fill at a better price
         num_base_lots: u64,
@@ -61,10 +61,10 @@ pub enum OrderPacket {
         side: Side,
 
         /// The most aggressive price an order can be matched at. For example, if there is an IOC buy order
-        /// to purchase 10 lots with the tick_per_lot parameter set to 10, then the order will never
-        /// be matched at a price higher than 10 quote ticks per base unit. If this value is None, then the order
+        /// to purchase 1 lot with the price_in_ticks parameter set to 10, then the order will never
+        /// be matched at a price higher than 10 ticks. If this value is None, then the order
         /// is treated as a market order.
-        num_quote_ticks_per_base_unit: Option<u64>,
+        price_in_ticks: Option<u64>,
 
         /// The number of base lots to fill against the order book. Either this parameter or the `num_quote_lots`
         /// parameter must be set to a nonzero value.
@@ -108,7 +108,7 @@ impl OrderPacket {
     pub fn new_post_only_default(side: Side, price_in_ticks: u64, num_base_lots: u64) -> Self {
         Self::PostOnly {
             side,
-            num_quote_ticks_per_base_unit: price_in_ticks,
+            price_in_ticks,
             num_base_lots,
             client_order_id: 0,
             reject_post_only: true,
@@ -124,7 +124,7 @@ impl OrderPacket {
     ) -> Self {
         Self::PostOnly {
             side,
-            num_quote_ticks_per_base_unit: price_in_ticks,
+            price_in_ticks,
             num_base_lots,
             client_order_id,
             reject_post_only: true,
@@ -140,7 +140,7 @@ impl OrderPacket {
     ) -> Self {
         Self::PostOnly {
             side,
-            num_quote_ticks_per_base_unit: price_in_ticks,
+            price_in_ticks,
             num_base_lots,
             client_order_id,
             reject_post_only: false,
@@ -158,7 +158,7 @@ impl OrderPacket {
     ) -> Self {
         Self::PostOnly {
             side,
-            num_quote_ticks_per_base_unit: price_in_ticks,
+            price_in_ticks,
             num_base_lots,
             client_order_id,
             reject_post_only,
@@ -206,7 +206,7 @@ impl OrderPacket {
     ) -> Self {
         Self::Limit {
             side,
-            num_quote_ticks_per_base_unit: price_in_ticks,
+            price_in_ticks,
             num_base_lots,
             self_trade_behavior,
             match_limit,
@@ -439,7 +439,7 @@ impl OrderPacket {
     ) -> Self {
         Self::ImmediateOrCancel {
             side,
-            num_quote_ticks_per_base_unit: price_in_ticks,
+            price_in_ticks,
             num_base_lots,
             num_quote_lots,
             min_base_lots_to_fill,

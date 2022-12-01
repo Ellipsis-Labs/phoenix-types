@@ -91,7 +91,7 @@ pub trait Market {
 
         for (side, book) in [(Side::Bid, &mut bids), (Side::Ask, &mut asks)].iter_mut() {
             for (key, order) in self.get_book(*side).iter() {
-                let price = key.num_quote_ticks_per_base_unit;
+                let price = key.price_in_ticks;
                 let size = order.num_base_lots;
                 if book.is_empty() {
                     book.push(LadderOrder {
@@ -120,7 +120,7 @@ pub trait Market {
 
     fn get_registered_traders(&self) -> &dyn OrderedNodeAllocatorMap<Pubkey, TraderState>;
 
-    fn get_quote_lots_per_tick(&self) -> u64;
+    fn get_tick_size_in_quote_lots_per_base_unit(&self) -> u64;
 
     fn get_base_lots_per_base_unit(&self) -> u64;
 
@@ -140,7 +140,7 @@ pub struct MarketHeader {
     pub status: u64,
 
     /// The size params of the market.
-    pub market_params: MarketParams,
+    pub market_size_params: MarketSizeParams,
 
     /// The specification of the base token of the market.
     pub base_params: TokenParams,
@@ -154,8 +154,8 @@ pub struct MarketHeader {
     /// The lot size of the quote token of the market, in quote atoms.
     quote_lot_size: u64,
 
-    /// The number of quote lots per tick in the market.
-    tick_size: u64,
+    /// The number of quote atoms per tick in the market.
+    tick_size_in_quote_atoms_per_base_unit: u64,
 
     /// The Pubkey of the market authority.
     pub authority: Pubkey,
@@ -170,11 +170,13 @@ pub struct MarketHeader {
     _padding1: u64,
     _padding2: u64,
 }
+
 impl ZeroCopy for MarketHeader {}
 
 impl MarketHeader {
+    /// Takes a price in quote atoms per base unit and returns the price in ticks.
     pub fn price_in_ticks(&self, price: u64) -> u64 {
-        price / self.tick_size
+        price / self.tick_size_in_quote_atoms_per_base_unit
     }
 
     pub fn get_base_lot_size(&self) -> u64 {
@@ -186,7 +188,7 @@ impl MarketHeader {
     }
 
     pub fn get_tick_size(&self) -> u64 {
-        self.tick_size
+        self.tick_size_in_quote_atoms_per_base_unit
     }
 }
 
@@ -197,8 +199,8 @@ pub struct FIFOMarket<const BIDS_SIZE: usize, const ASKS_SIZE: usize, const NUM_
     /// Number of base lots in a base unit. For example, if the lot size is 0.001 SOL, then base_lots_per_base_unit is 1000.
     pub base_lots_per_base_unit: u64,
 
-    /// Tick size in terms of quote lots. For example, if the tick size is 0.01 USDC and the quote lot size is 0.001 USDC, then quote_lots_per_tick is 10.
-    pub quote_lots_per_tick: u64,
+    /// Tick size in quote lots per base unit. For example, if the tick size is 0.01 USDC and the quote lot size is 0.001 USDC, then quote_lots_per_base_unit_per_tick is 10.
+    pub tick_size_in_quote_lots_per_base_unit: u64,
 
     /// The sequence number of the next event.
     order_sequence_number: u64,
@@ -262,8 +264,8 @@ impl<const BIDS_SIZE: usize, const ASKS_SIZE: usize, const NUM_SEATS: usize> Mar
         self.base_lots_per_base_unit
     }
 
-    fn get_quote_lots_per_tick(&self) -> u64 {
-        self.quote_lots_per_tick
+    fn get_tick_size_in_quote_lots_per_base_unit(&self) -> u64 {
+        self.tick_size_in_quote_lots_per_base_unit
     }
 
     fn get_registered_traders(&self) -> &dyn OrderedNodeAllocatorMap<Pubkey, TraderState> {
@@ -274,12 +276,12 @@ impl<const BIDS_SIZE: usize, const ASKS_SIZE: usize, const NUM_SEATS: usize> Mar
 /// Struct representing the size parameters of a market.
 #[derive(Debug, Copy, Clone, BorshDeserialize, BorshSerialize, Zeroable, Pod)]
 #[repr(C)]
-pub struct MarketParams {
+pub struct MarketSizeParams {
     pub bids_size: u64,
     pub asks_size: u64,
     pub num_seats: u64,
 }
-impl ZeroCopy for MarketParams {}
+impl ZeroCopy for MarketSizeParams {}
 
 /// Struct representing the parameters for a token.
 #[derive(Debug, Copy, Clone, BorshDeserialize, BorshSerialize, Zeroable, Pod)]
@@ -316,12 +318,12 @@ impl ZeroCopy for Seat {}
 #[repr(C)]
 #[derive(Eq, PartialEq, Debug, Default, Copy, Clone, Zeroable, Pod, Serialize, Deserialize)]
 pub struct FIFOOrderId {
-    /// This is equivalent to price of an order, in quote ticks per base unit. Each market has a designated
+    /// The price of the order, in ticks. Each market has a designated
     /// tick size (some number of quote lots) that is used to convert the price to quote ticks per base unit.
-    /// For example, if the tick size is 0.01, then a price of 1.23 is converted to 123 quote ticks per
-    /// base unit. If the quote lot size is 0.001, this means that there is a spacing of 10 quote lots
+    /// For example, if the tick size is 0.01, then a price of 1.23 is converted to 123 ticks.
+    /// If the quote lot size is 0.001, this means that there is a spacing of 10 quote lots
     /// in between each tick.
-    pub num_quote_ticks_per_base_unit: u64,
+    pub price_in_ticks: u64,
 
     /// This is the unique identifier of the order, which is used to determine the side of the order.
     /// It is derived from the sequence number of the market.
@@ -362,14 +364,14 @@ impl FIFOOrderId {
         order_sequence_number: u64,
     ) -> Self {
         FIFOOrderId {
-            num_quote_ticks_per_base_unit,
+            price_in_ticks: num_quote_ticks_per_base_unit,
             order_sequence_number,
         }
     }
 
     pub fn new(num_quote_ticks_per_base_unit: u64, order_sequence_number: u64) -> Self {
         FIFOOrderId {
-            num_quote_ticks_per_base_unit,
+            price_in_ticks: num_quote_ticks_per_base_unit,
             order_sequence_number,
         }
     }
@@ -384,16 +386,13 @@ impl PartialOrd for FIFOOrderId {
         let (tick_cmp, seq_cmp) = match Side::from_order_sequence_number(self.order_sequence_number)
         {
             Side::Bid => (
-                other
-                    .num_quote_ticks_per_base_unit
-                    .partial_cmp(&self.num_quote_ticks_per_base_unit)?,
+                other.price_in_ticks.partial_cmp(&self.price_in_ticks)?,
                 other
                     .order_sequence_number
                     .partial_cmp(&self.order_sequence_number)?,
             ),
             Side::Ask => (
-                self.num_quote_ticks_per_base_unit
-                    .partial_cmp(&other.num_quote_ticks_per_base_unit)?,
+                self.price_in_ticks.partial_cmp(&other.price_in_ticks)?,
                 self.order_sequence_number
                     .partial_cmp(&other.order_sequence_number)?,
             ),
