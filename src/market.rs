@@ -120,8 +120,6 @@ pub trait Market {
 
     fn get_registered_traders(&self) -> &dyn OrderedNodeAllocatorMap<Pubkey, TraderState>;
 
-    fn get_tick_size_in_quote_lots_per_base_unit(&self) -> u64;
-
     fn get_base_lots_per_base_unit(&self) -> u64;
 
     fn get_trader_address(&self, trader: &Pubkey) -> Option<u32>;
@@ -187,7 +185,7 @@ impl MarketHeader {
         self.quote_lot_size
     }
 
-    pub fn get_tick_size(&self) -> u64 {
+    pub fn get_tick_size_in_quote_atoms_per_base_unit(&self) -> u64 {
         self.tick_size_in_quote_atoms_per_base_unit
     }
 }
@@ -262,10 +260,6 @@ impl<const BIDS_SIZE: usize, const ASKS_SIZE: usize, const NUM_SEATS: usize> Mar
 
     fn get_base_lots_per_base_unit(&self) -> u64 {
         self.base_lots_per_base_unit
-    }
-
-    fn get_tick_size_in_quote_lots_per_base_unit(&self) -> u64 {
-        self.tick_size_in_quote_lots_per_base_unit
     }
 
     fn get_registered_traders(&self) -> &dyn OrderedNodeAllocatorMap<Pubkey, TraderState> {
