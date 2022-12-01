@@ -2,7 +2,7 @@
 name = "phoenix-types"
 version = "0.1.9"
 edition = "2021"
-description = "Lightweight interface for interacting with the Solana blockchain"
+description = "Struct definitions for Phoenix"
 license = "MIT OR Apache-2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
