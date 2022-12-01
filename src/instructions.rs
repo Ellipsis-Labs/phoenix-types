@@ -729,7 +729,7 @@ pub fn create_request_seat_instruction(payer: &Pubkey, market: &Pubkey) -> Instr
         program_id: crate::id(),
         accounts: vec![
             AccountMeta::new(*payer, true),
-            AccountMeta::new(*market, false),
+            AccountMeta::new_readonly(*market, false),
             AccountMeta::new(seat, false),
             AccountMeta::new_readonly(system_program::id(), false),
         ],
