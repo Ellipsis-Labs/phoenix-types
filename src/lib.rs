@@ -5,7 +5,7 @@ pub mod instructions;
 pub mod market;
 pub mod order_packet;
 
-// You need to import Pubkey prior to using the declare_pda macro
+// You need to import Pubkey prior to using the declare_id macro
 use ellipsis_macros::declare_id;
 use solana_sdk::pubkey::Pubkey;
 declare_id!("phnxNHfGNVjpVVuHkceK3MgwZ1bW25ijfWACKhVFbBH");
