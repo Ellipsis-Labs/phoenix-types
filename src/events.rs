@@ -26,12 +26,6 @@ pub struct AuditLogHeader {
     pub total_events: u16,
 }
 
-#[derive(BorshDeserialize, BorshSerialize)]
-pub struct AuditLog {
-    pub chunk_index: u8,
-    pub num_events: u8,
-}
-
 /// Enum representing the different types of events that can be logged.
 #[derive(Debug, Copy, Clone, BorshDeserialize, BorshSerialize)]
 pub enum MarketEvent {
@@ -134,5 +128,14 @@ pub enum MarketEvent {
 
         /// The total amount of fees paid, in quote lots.
         total_fee_in_quote_lots: u64,
+    },
+
+    /// Represents the total quote lot fees collected when CollectFees is called.
+    Fee {
+        /// Index of the event in the list of events.
+        index: u16,
+
+        /// Total fees collected, in quote lots.
+        fees_collected_in_quote_lots: u64,
     },
 }
