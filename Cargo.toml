@@ -14,7 +14,7 @@ pyo3 = ["dep:pyo3", "dep:solders-traits", "dep:solders-macros"]
 lib-sokoban = "0.2.4" 
 bytemuck = "1.11.0"
 thiserror = "^1.0.24"
-solana-sdk = "1.10.32"
+solana-sdk = "=1.14.9"
 borsh = "0.9.3"
 shank = "0.0.9"
 ellipsis-macros = "0.1.1" 
