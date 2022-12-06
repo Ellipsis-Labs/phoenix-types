@@ -204,6 +204,12 @@ pub struct DepositParams {
     pub base_lots: u64,
 }
 
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, BorshDeserialize, BorshSerialize)]
+pub struct WithdrawParams {
+    pub quote_lots_to_withdraw: Option<u64>,
+    pub base_lots_to_withdraw: Option<u64>,
+}
+
 pub fn create_new_order_instruction(
     market: &Pubkey,
     trader: &Pubkey,
@@ -712,7 +718,7 @@ pub fn create_withdraw_funds_instruction_with_custom_token_accounts(
     base: &Pubkey,
     quote: &Pubkey,
 ) -> Instruction {
-    _phoenix_instruction_template_no_param(
+    _phoenix_instruction_template::<WithdrawParams>(
         market,
         trader,
         base_account,
@@ -720,6 +726,55 @@ pub fn create_withdraw_funds_instruction_with_custom_token_accounts(
         base,
         quote,
         PhoenixInstruction::WithdrawFunds,
+        Some(&WithdrawParams {
+            quote_lots_to_withdraw: None,
+            base_lots_to_withdraw: None,
+        }),
+    )
+}
+
+pub fn create_withdraw_funds_with_custom_amounts_instruction(
+    market: &Pubkey,
+    trader: &Pubkey,
+    base: &Pubkey,
+    quote: &Pubkey,
+    base_lots: u64,
+    quote_lots: u64,
+) -> Instruction {
+    let base_account = get_associated_token_address(trader, base);
+    let quote_account = get_associated_token_address(trader, quote);
+    create_withdraw_funds_with_custom_amounts_instruction_with_custom_token_accounts(
+        market,
+        trader,
+        &base_account,
+        &quote_account,
+        base,
+        quote,
+        &WithdrawParams {
+            quote_lots_to_withdraw: Some(quote_lots),
+            base_lots_to_withdraw: Some(base_lots),
+        },
+    )
+}
+
+pub fn create_withdraw_funds_with_custom_amounts_instruction_with_custom_token_accounts(
+    market: &Pubkey,
+    trader: &Pubkey,
+    base_account: &Pubkey,
+    quote_account: &Pubkey,
+    base: &Pubkey,
+    quote: &Pubkey,
+    params: &WithdrawParams,
+) -> Instruction {
+    _phoenix_instruction_template::<WithdrawParams>(
+        market,
+        trader,
+        base_account,
+        quote_account,
+        base,
+        quote,
+        PhoenixInstruction::WithdrawFunds,
+        Some(params),
     )
 }
 
