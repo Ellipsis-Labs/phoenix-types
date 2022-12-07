@@ -420,12 +420,11 @@ impl FIFORestingOrder {
         }
     }
 }
-
 #[repr(C)]
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, Zeroable, Pod)]
 pub struct TraderState {
-    pub adjusted_quote_lots_locked: u64,
-    pub adjusted_quote_lots_free: u64,
+    pub quote_lots_locked: u64,
+    pub quote_lots_free: u64,
     pub base_lots_locked: u64,
     pub base_lots_free: u64,
 }
