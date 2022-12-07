@@ -170,6 +170,29 @@ pub enum PhoenixInstruction {
 
     #[account(0, signer, name = "log_authority", desc = "Log authority")]
     Log = 15,
+
+    /// Place multiple post only orders on the book.
+    /// These orders can either be set to be rejected or amended if they cross the book.
+    #[account(0, writable, name = "market", desc = "This account holds the market state")]
+    #[account(1, writable, signer, name = "trader")]
+    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(4, name = "seat")]
+    #[account(5, writable, name = "base_account", desc = "Trader base token account")]
+    #[account(6, writable, name = "quote_account", desc = "Trader quote token account")]
+    #[account(7, writable, name = "base_vault", desc = "Base vault PDA, seeds are [b'vault', market_address, base_mint_address]")]
+    #[account(8, writable, name = "quote_vault", desc = "Quote vault PDA, seeds are [b'vault', market_address, quote_mint_address]")]
+    #[account(9, name = "token_program", desc = "Token program")]
+    PlaceMultiplePostOnlyOrders = 16,
+        
+    /// Place multiple post only orders on the book using only deposited funds.
+    /// These orders can either be set to be rejected or amended if they cross the book.
+    #[account(0, writable, name = "market", desc = "This account holds the market state")]
+    #[account(1, writable, signer, name = "trader")]
+    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(4, name = "seat")]
+    PlaceMultiplePostOnlyOrdersWithFreeFunds = 17,
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Clone, Copy)]

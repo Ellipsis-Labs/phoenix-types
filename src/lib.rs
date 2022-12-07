@@ -4,6 +4,7 @@ pub mod events;
 pub mod instructions;
 pub mod market;
 pub mod order_packet;
+pub mod multiple_order_packet;
 
 // You need to import Pubkey prior to using the declare_id macro
 use ellipsis_macros::declare_id;
