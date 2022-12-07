@@ -206,11 +206,11 @@ pub struct FIFOMarket<const BIDS_SIZE: usize, const ASKS_SIZE: usize, const NUM_
     /// There are no maker fees. Taker fees are charged on the amount of the trade in basis points.
     pub taker_fee_bps: u64,
 
-    /// Amount of fees collected from the market in its lifetime, in adjusted quote lots. Adjusted quote lots = quote lots * base lots per base unit.
-    collected_adjusted_quote_lot_fees: u64,
+    /// Amount of fees collected from the market in its lifetime, in quote lots.
+    collected_quote_lot_fees: u64,
 
-    /// Amount of unclaimed fees accrued to the market, in adjusted quote lots. Adjusted quote lots = quote lots * base lots per base unit.
-    unclaimed_adjusted_quote_lot_fees: u64,
+    /// Amount of unclaimed fees accrued to the market, in quote lots.
+    unclaimed_quote_lot_fees: u64,
 
     /// Red-black tree representing the bids in the order book.
     pub bids: RedBlackTree<FIFOOrderId, FIFORestingOrder, BIDS_SIZE>,
