@@ -239,7 +239,7 @@ impl OrderPacket {
 
     pub fn new_fok_buy_with_limit_price(
         target_price_in_ticks: u64,
-        quote_lot_budget: u64,
+        base_lot_budget: u64,
         self_trade_behavior: SelfTradeBehavior,
         match_limit: Option<u64>,
         client_order_id: u128,
@@ -248,10 +248,10 @@ impl OrderPacket {
         Self::new_ioc(
             Side::Bid,
             Some(target_price_in_ticks),
+            base_lot_budget,
             0,
-            quote_lot_budget,
+            base_lot_budget,
             0,
-            quote_lot_budget,
             self_trade_behavior,
             match_limit,
             client_order_id,
@@ -323,74 +323,6 @@ impl OrderPacket {
             match_limit,
             client_order_id,
             use_only_deposited_funds,
-        )
-    }
-
-    pub fn new_fok_buy_with_slippage_with_client_order_id(
-        quote_lots_in: u64,
-        min_base_lots_out: u64,
-        client_order_id: u128,
-    ) -> Self {
-        Self::new_ioc(
-            Side::Bid,
-            None,
-            0,
-            quote_lots_in,
-            min_base_lots_out,
-            quote_lots_in,
-            SelfTradeBehavior::CancelProvide,
-            None,
-            client_order_id,
-            false,
-        )
-    }
-
-    pub fn new_fok_sell_with_slippage_with_client_order_id(
-        base_lots_in: u64,
-        min_quote_lots_out: u64,
-        client_order_id: u128,
-    ) -> Self {
-        Self::new_ioc(
-            Side::Ask,
-            None,
-            base_lots_in,
-            0,
-            base_lots_in,
-            min_quote_lots_out,
-            SelfTradeBehavior::CancelProvide,
-            None,
-            client_order_id,
-            false,
-        )
-    }
-
-    pub fn new_fok_buy_with_slippage(quote_lots_in: u64, min_base_lots_out: u64) -> Self {
-        Self::new_ioc(
-            Side::Bid,
-            None,
-            0,
-            quote_lots_in,
-            min_base_lots_out,
-            quote_lots_in,
-            SelfTradeBehavior::CancelProvide,
-            None,
-            0,
-            false,
-        )
-    }
-
-    pub fn new_fok_sell_with_slippage(base_lots_in: u64, min_quote_lots_out: u64) -> Self {
-        Self::new_ioc(
-            Side::Ask,
-            None,
-            base_lots_in,
-            0,
-            base_lots_in,
-            min_quote_lots_out,
-            SelfTradeBehavior::CancelProvide,
-            None,
-            0,
-            false,
         )
     }
 
