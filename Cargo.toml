@@ -14,13 +14,12 @@ pyo3 = ["dep:pyo3", "dep:solders-traits", "dep:solders-macros"]
 lib-sokoban = "0.2.4" 
 bytemuck = "1.11.0"
 thiserror = "^1.0.24"
-solana-sdk = "=1.14.9"
+solana-sdk = "*"
 borsh = "0.9.3"
 shank = "0.0.9"
-ellipsis-macros = "0.1.1" 
-spl-token = { version = "3.5.0", features = ["no-entrypoint"] }
-spl-associated-token-account = { version = "1.1.1", features = [ "no-entrypoint" ] }
-spl-noop = { version = "=0.1.0", features = [ "no-entrypoint" ] }
+ellipsis-macros = { git = "https://github.com/Ellipsis-Labs/ellipsis-macros", branch = "master" }
+spl-token = { version = "*", features = ["no-entrypoint"] }
+spl-associated-token-account = { version = "*", features = [ "no-entrypoint" ] }
 pyo3 = { git = "https://github.com/PyO3/pyo3", rev = "1d20f2a", optional = true }
 solders-traits = { git = "https://github.com/kevinheavey/solders", rev = "ba153af", optional = true }
 solders-macros = { git = "https://github.com/kevinheavey/solders", rev = "ba153af", optional = true }

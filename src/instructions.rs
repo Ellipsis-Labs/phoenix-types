@@ -170,35 +170,6 @@ pub enum PhoenixInstruction {
 
     #[account(0, signer, name = "log_authority", desc = "Log authority")]
     Log = 15,
-
-    /// Place multiple post only orders on the book.
-    /// These orders can either be set to be rejected or amended if they cross the book.
-    #[account(0, writable, name = "market", desc = "This account holds the market state")]
-    #[account(1, writable, signer, name = "trader")]
-    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
-    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
-    #[account(4, name = "seat")]
-    #[account(5, writable, name = "base_account", desc = "Trader base token account")]
-    #[account(6, writable, name = "quote_account", desc = "Trader quote token account")]
-    #[account(7, writable, name = "base_vault", desc = "Base vault PDA, seeds are [b'vault', market_address, base_mint_address]")]
-    #[account(8, writable, name = "quote_vault", desc = "Quote vault PDA, seeds are [b'vault', market_address, quote_mint_address]")]
-    #[account(9, name = "token_program", desc = "Token program")]
-    PlaceMultiplePostOnlyOrders = 16,
-        
-    /// Place multiple post only orders on the book using only deposited funds.
-    /// These orders can either be set to be rejected or amended if they cross the book.
-    #[account(0, writable, name = "market", desc = "This account holds the market state")]
-    #[account(1, writable, signer, name = "trader")]
-    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
-    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
-    #[account(4, name = "seat")]
-    PlaceMultiplePostOnlyOrdersWithFreeFunds = 17,
-}
-
-impl PhoenixInstruction {
-    pub fn to_vec(&self) -> Vec<u8> {
-        vec![*self as u8]
-    }
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Clone, Copy)]
@@ -237,70 +208,6 @@ pub struct DepositParams {
 pub struct WithdrawParams {
     pub quote_lots_to_withdraw: Option<u64>,
     pub base_lots_to_withdraw: Option<u64>,
-}
-
-/// Struct to send a vector of bids and asks as PostOnly orders in a single packet.
-#[derive(BorshDeserialize, BorshSerialize, Debug)]
-pub struct MultipleOrderPacket {
-    pub bids: Vec<CondensedOrder>,
-    pub asks: Vec<CondensedOrder>,
-    pub client_order_id: Option<u128>,
-    pub reject_post_only: bool,
-}
-
-#[derive(BorshDeserialize, BorshSerialize, Debug)]
-pub struct CondensedOrder {
-    pub price_in_ticks: u64,
-    pub size_in_base_lots: u64,
-}
-/// Helpers for creating MultipleOrderPacket from vectors of u64 (price in ticks, size in base lots)
-impl MultipleOrderPacket {
-    pub fn new(
-        bids: Vec<(u64, u64)>,
-        asks: Vec<(u64, u64)>,
-        client_order_id: Option<u128>,
-        reject_post_only: bool,
-    ) -> Self {
-        MultipleOrderPacket {
-            bids: bids
-                .iter()
-                .map(|(p, s)| CondensedOrder {
-                    price_in_ticks: *p,
-                    size_in_base_lots: *s,
-                })
-                .collect(),
-            asks: asks
-                .iter()
-                .map(|(p, s)| CondensedOrder {
-                    price_in_ticks: *p,
-                    size_in_base_lots: *s,
-                })
-                .collect(),
-            client_order_id,
-            reject_post_only,
-        }
-    }
-
-    pub fn new_default(bids: Vec<(u64, u64)>, asks: Vec<(u64, u64)>) -> Self {
-        MultipleOrderPacket {
-            bids: bids
-                .iter()
-                .map(|(p, s)| CondensedOrder {
-                    price_in_ticks: *p,
-                    size_in_base_lots: *s,
-                })
-                .collect(),
-            asks: asks
-                .iter()
-                .map(|(p, s)| CondensedOrder {
-                    price_in_ticks: *p,
-                    size_in_base_lots: *s,
-                })
-                .collect(),
-            client_order_id: None,
-            reject_post_only: true,
-        }
-    }
 }
 
 pub fn create_new_order_instruction(
@@ -349,7 +256,7 @@ pub fn create_new_order_instruction_with_custom_token_accounts(
                 AccountMeta::new_readonly(spl_token::id(), false),
             ],
             data: [
-                PhoenixInstruction::Swap.to_vec(),
+                PhoenixInstruction::Swap.try_to_vec().unwrap(),
                 order_type.try_to_vec().unwrap(),
             ]
             .concat(),
@@ -371,7 +278,7 @@ pub fn create_new_order_instruction_with_custom_token_accounts(
                 AccountMeta::new_readonly(spl_token::id(), false),
             ],
             data: [
-                PhoenixInstruction::PlaceLimitOrder.to_vec(),
+                PhoenixInstruction::PlaceLimitOrder.try_to_vec().unwrap(),
                 order_type.try_to_vec().unwrap(),
             ]
             .concat(),
@@ -406,9 +313,11 @@ pub fn create_new_order_instruction_with_free_funds_with_custom_token_accounts(
         ],
         data: [
             if order_type.is_take_only() {
-                PhoenixInstruction::SwapWithFreeFunds.to_vec()
+                PhoenixInstruction::SwapWithFreeFunds.try_to_vec().unwrap()
             } else {
-                PhoenixInstruction::PlaceLimitOrderWithFreeFunds.to_vec()
+                PhoenixInstruction::PlaceLimitOrderWithFreeFunds
+                    .try_to_vec()
+                    .unwrap()
             },
             order_type.try_to_vec().unwrap(),
         ]
@@ -428,7 +337,9 @@ pub fn create_cancel_all_order_with_free_funds_instruction(
             AccountMeta::new_readonly(phoenix_log_authority::id(), false),
             AccountMeta::new_readonly(crate::id(), false),
         ],
-        data: PhoenixInstruction::CancelAllOrdersWithFreeFunds.to_vec(),
+        data: PhoenixInstruction::CancelAllOrdersWithFreeFunds
+            .try_to_vec()
+            .unwrap(),
     }
 }
 
@@ -446,7 +357,9 @@ pub fn create_cancel_up_to_with_free_funds_instruction(
             AccountMeta::new_readonly(crate::id(), false),
         ],
         data: [
-            PhoenixInstruction::CancelUpToWithFreeFunds.to_vec(),
+            PhoenixInstruction::CancelUpToWithFreeFunds
+                .try_to_vec()
+                .unwrap(),
             params.try_to_vec().unwrap(),
         ]
         .concat(),
@@ -467,7 +380,9 @@ pub fn create_cancel_multiple_orders_by_id_with_free_funds_instruction(
             AccountMeta::new_readonly(crate::id(), false),
         ],
         data: [
-            PhoenixInstruction::CancelMultipleOrdersByIdWithFreeFunds.to_vec(),
+            PhoenixInstruction::CancelMultipleOrdersByIdWithFreeFunds
+                .try_to_vec()
+                .unwrap(),
             params.try_to_vec().unwrap(),
         ]
         .concat(),
@@ -488,7 +403,9 @@ pub fn create_reduce_order_with_free_funds_instruction(
             AccountMeta::new_readonly(crate::id(), false),
         ],
         data: [
-            PhoenixInstruction::ReduceOrderWithFreeFunds.to_vec(),
+            PhoenixInstruction::ReduceOrderWithFreeFunds
+                .try_to_vec()
+                .unwrap(),
             params.try_to_vec().unwrap(),
         ]
         .concat(),
@@ -545,7 +462,11 @@ pub fn create_deposit_funds_instruction_with_custom_token_accounts(
             AccountMeta::new(quote_vault, false),
             AccountMeta::new_readonly(spl_token::id(), false),
         ],
-        data: [PhoenixInstruction::DepositFunds.to_vec(), ix_data].concat(),
+        data: [
+            PhoenixInstruction::DepositFunds.try_to_vec().unwrap(),
+            ix_data,
+        ]
+        .concat(),
     }
 }
 
@@ -869,83 +790,6 @@ pub fn create_request_seat_instruction(payer: &Pubkey, market: &Pubkey) -> Instr
             AccountMeta::new_readonly(phoenix_log_authority::id(), false),
             AccountMeta::new_readonly(crate::id(), false),
         ],
-        data: PhoenixInstruction::RequestSeat.to_vec(),
-    }
-}
-
-pub fn create_new_multiple_order_instruction(
-    market: &Pubkey,
-    trader: &Pubkey,
-    base: &Pubkey,
-    quote: &Pubkey,
-    multiple_order_packet: &MultipleOrderPacket,
-) -> Instruction {
-    let base_account = get_associated_token_address(trader, base);
-    let quote_account = get_associated_token_address(trader, quote);
-    create_new_multiple_order_instruction_with_custom_token_accounts(
-        market,
-        trader,
-        &base_account,
-        &quote_account,
-        base,
-        quote,
-        multiple_order_packet,
-    )
-}
-
-pub fn create_new_multiple_order_instruction_with_custom_token_accounts(
-    market: &Pubkey,
-    trader: &Pubkey,
-    base_account: &Pubkey,
-    quote_account: &Pubkey,
-    base: &Pubkey,
-    quote: &Pubkey,
-    multiple_order_packet: &MultipleOrderPacket,
-) -> Instruction {
-    let (base_vault, _) = get_vault_address(market, base);
-    let (quote_vault, _) = get_vault_address(market, quote);
-    let (seat, _) = get_seat_address(market, trader);
-    Instruction {
-        program_id: crate::id(),
-        accounts: vec![
-            AccountMeta::new(*market, false),
-            AccountMeta::new(*trader, true),
-            AccountMeta::new_readonly(phoenix_log_authority::id(), false),
-            AccountMeta::new_readonly(crate::id(), false),
-            AccountMeta::new_readonly(seat, false),
-            AccountMeta::new(*base_account, false),
-            AccountMeta::new(*quote_account, false),
-            AccountMeta::new(base_vault, false),
-            AccountMeta::new(quote_vault, false),
-            AccountMeta::new_readonly(spl_token::id(), false),
-        ],
-        data: [
-            PhoenixInstruction::PlaceMultiplePostOnlyOrders.to_vec(),
-            multiple_order_packet.try_to_vec().unwrap(),
-        ]
-        .concat(),
-    }
-}
-
-pub fn create_new_multiple_order_with_free_funds_instruction(
-    market: &Pubkey,
-    trader: &Pubkey,
-    multiple_order_packet: &MultipleOrderPacket,
-) -> Instruction {
-    let (seat, _) = get_seat_address(market, trader);
-    Instruction {
-        program_id: crate::id(),
-        accounts: vec![
-            AccountMeta::new(*market, false),
-            AccountMeta::new(*trader, true),
-            AccountMeta::new_readonly(phoenix_log_authority::id(), false),
-            AccountMeta::new_readonly(crate::id(), false),
-            AccountMeta::new_readonly(seat, false),
-        ],
-        data: [
-            PhoenixInstruction::PlaceMultiplePostOnlyOrdersWithFreeFunds.to_vec(),
-            multiple_order_packet.try_to_vec().unwrap(),
-        ]
-        .concat(),
+        data: PhoenixInstruction::RequestSeat.try_to_vec().unwrap(),
     }
 }
