@@ -120,6 +120,8 @@ pub trait Market {
 
     fn get_registered_traders(&self) -> &dyn OrderedNodeAllocatorMap<Pubkey, TraderState>;
 
+    fn get_taker_bps(&self) -> u16;
+
     fn get_base_lots_per_base_unit(&self) -> u64;
 
     fn get_trader_address(&self, trader: &Pubkey) -> Option<u32>;
@@ -235,6 +237,11 @@ impl<const BIDS_SIZE: usize, const ASKS_SIZE: usize, const NUM_SEATS: usize> Zer
 impl<const BIDS_SIZE: usize, const ASKS_SIZE: usize, const NUM_SEATS: usize> Market
     for FIFOMarket<BIDS_SIZE, ASKS_SIZE, NUM_SEATS>
 {
+    #[inline(always)]
+    fn get_taker_bps(&self) -> u16 {
+        self.taker_fee_bps as u16
+    }
+
     #[inline(always)]
     fn get_trader_address(&self, trader: &Pubkey) -> Option<u32> {
         let addr = self.traders.get_addr(trader);
