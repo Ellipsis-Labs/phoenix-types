@@ -1,6 +1,7 @@
 use crate::order_packet::OrderPacket;
 use crate::{enums::Side, phoenix_log_authority};
 use borsh::{BorshDeserialize, BorshSerialize};
+use num_enum::TryFromPrimitive;
 use shank::ShankInstruction;
 use solana_sdk::{
     instruction::{AccountMeta, Instruction},
@@ -17,14 +18,16 @@ pub fn get_seat_address(market: &Pubkey, trader: &Pubkey) -> (Pubkey, u8) {
     Pubkey::find_program_address(&[b"seat", market.as_ref(), trader.as_ref()], &crate::ID)
 }
 
-#[derive(Debug, Copy, Clone, ShankInstruction, BorshSerialize, BorshDeserialize)]
+#[repr(u8)]
+#[derive(TryFromPrimitive, Debug, Copy, Clone, ShankInstruction, PartialEq, Eq)]
 #[rustfmt::skip]
 pub enum PhoenixInstruction {
+    // Market instructions
     /// Send a swap (no limit orders allowed) order
-    #[account(0, writable, name = "market", desc = "This account holds the market state")]
-    #[account(1, writable, signer, name = "trader")]
-    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
-    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(0, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(1, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(2, writable, name = "market", desc = "This account holds the market state")]
+    #[account(3, writable, signer, name = "trader")]
     #[account(4, writable, name = "base_account", desc = "Trader base token account")]
     #[account(5, writable, name = "quote_account", desc = "Trader quote token account")]
     #[account(6, writable, name = "base_vault", desc = "Base vault PDA, seeds are [b'vault', market_address, base_mint_address]")]
@@ -33,18 +36,18 @@ pub enum PhoenixInstruction {
     Swap = 0,
 
     /// Send a swap (no limit orders allowed) order using only deposited funds
-    #[account(0, writable, name = "market", desc = "This account holds the market state")]
-    #[account(1, writable, signer, name = "trader")]
-    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
-    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(0, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(1, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(2, writable, name = "market", desc = "This account holds the market state")]
+    #[account(3, writable, signer, name = "trader")]
     #[account(4, name = "seat")]
     SwapWithFreeFunds = 1,
 
     /// Place a limit order on the book. The order can cross if the supplied order type is Limit
-    #[account(0, writable, name = "market", desc = "This account holds the market state")]
-    #[account(1, writable, signer, name = "trader")]
-    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
-    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(0, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(1, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(2, writable, name = "market", desc = "This account holds the market state")]
+    #[account(3, writable, signer, name = "trader")]
     #[account(4, name = "seat")]
     #[account(5, writable, name = "base_account", desc = "Trader base token account")]
     #[account(6, writable, name = "quote_account", desc = "Trader quote token account")]
@@ -54,18 +57,18 @@ pub enum PhoenixInstruction {
     PlaceLimitOrder = 2,
 
     /// Place a limit order on the book using only deposited funds.
-    #[account(0, writable, name = "market", desc = "This account holds the market state")]
-    #[account(1, writable, signer, name = "trader")]
-    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
-    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(0, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(1, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(2, writable, name = "market", desc = "This account holds the market state")]
+    #[account(3, writable, signer, name = "trader")]
     #[account(4, name = "seat")]
     PlaceLimitOrderWithFreeFunds = 3,
 
     /// Reduce the size of an existing order on the book 
-    #[account(0, writable, name = "market", desc = "This account holds the market state")]
-    #[account(1, writable, signer, name = "trader")]
-    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
-    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(0, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(1, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(2, writable, name = "market", desc = "This account holds the market state")]
+    #[account(3, writable, signer, name = "trader")]
     #[account(4, writable, name = "base_account", desc = "Trader base token account")]
     #[account(5, writable, name = "quote_account", desc = "Trader quote token account")]
     #[account(6, writable, name = "base_vault", desc = "Base vault PDA, seeds are [b'vault', market_address, base_mint_address]")]
@@ -74,18 +77,18 @@ pub enum PhoenixInstruction {
     ReduceOrder = 4,
 
     /// Reduce the size of an existing order on the book 
-    #[account(0, writable, name = "market", desc = "This account holds the market state")]
-    #[account(1, writable, signer, name = "trader")]
-    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
-    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(0, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(1, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(2, writable, name = "market", desc = "This account holds the market state")]
+    #[account(3, writable, signer, name = "trader")]
     ReduceOrderWithFreeFunds = 5,
 
 
     /// Cancel all orders 
-    #[account(0, writable, name = "market", desc = "This account holds the market state")]
-    #[account(1, writable, signer, name = "trader")]
-    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
-    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(0, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(1, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(2, writable, name = "market", desc = "This account holds the market state")]
+    #[account(3, writable, signer, name = "trader")]
     #[account(4, writable, name = "base_account", desc = "Trader base token account")]
     #[account(5, writable, name = "quote_account", desc = "Trader quote token account")]
     #[account(6, writable, name = "base_vault", desc = "Base vault PDA, seeds are [b'vault', market_address, base_mint_address]")]
@@ -94,17 +97,17 @@ pub enum PhoenixInstruction {
     CancelAllOrders = 6,
 
     /// Cancel all orders (no token transfers) 
-    #[account(0, writable, name = "market", desc = "This account holds the market state")]
-    #[account(1, writable, signer, name = "trader")]
-    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
-    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(0, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(1, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(2, writable, name = "market", desc = "This account holds the market state")]
+    #[account(3, writable, signer, name = "trader")]
     CancelAllOrdersWithFreeFunds = 7,
 
     /// Cancel all orders more aggressive than a specified price
-    #[account(0, writable, name = "market", desc = "This account holds the market state")]
-    #[account(1, writable, signer, name = "trader")]
-    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
-    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(0, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(1, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(2, writable, name = "market", desc = "This account holds the market state")]
+    #[account(3, writable, signer, name = "trader")]
     #[account(4, writable, name = "base_account", desc = "Trader base token account")]
     #[account(5, writable, name = "quote_account", desc = "Trader quote token account")]
     #[account(6, writable, name = "base_vault", desc = "Base vault PDA, seeds are [b'vault', market_address, base_mint_address]")]
@@ -114,17 +117,17 @@ pub enum PhoenixInstruction {
 
 
     /// Cancel all orders more aggressive than a specified price (no token transfers) 
-    #[account(0, writable, name = "market", desc = "This account holds the market state")]
-    #[account(1, writable, signer, name = "trader")]
-    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
-    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(0, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(1, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(2, writable, name = "market", desc = "This account holds the market state")]
+    #[account(3, writable, signer, name = "trader")]
     CancelUpToWithFreeFunds = 9,
 
     /// Cancel multiple orders by ID 
-    #[account(0, writable, name = "market", desc = "This account holds the market state")]
-    #[account(1, writable, signer, name = "trader")]
-    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
-    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(0, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(1, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(2, writable, name = "market", desc = "This account holds the market state")]
+    #[account(3, writable, signer, name = "trader")]
     #[account(4, writable, name = "base_account", desc = "Trader base token account")]
     #[account(5, writable, name = "quote_account", desc = "Trader quote token account")]
     #[account(6, writable, name = "base_vault", desc = "Base vault PDA, seeds are [b'vault', market_address, base_mint_address]")]
@@ -133,16 +136,16 @@ pub enum PhoenixInstruction {
     CancelMultipleOrdersById = 10,
 
     /// Cancel multiple orders by ID (no token transfers) 
-    #[account(0, writable, name = "market", desc = "This account holds the market state")]
-    #[account(1, writable, signer, name = "trader")]
-    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
-    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(0, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(1, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(2, writable, name = "market", desc = "This account holds the market state")]
+    #[account(3, writable, signer, name = "trader")]
     CancelMultipleOrdersByIdWithFreeFunds = 11,
 
-    #[account(0, writable, name = "market", desc = "This account holds the market state")]
-    #[account(1, writable, signer, name = "trader")]
-    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
-    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(0, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(1, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(2, writable, name = "market", desc = "This account holds the market state")]
+    #[account(3, writable, signer, name = "trader")]
     #[account(4, writable, name = "base_account", desc = "Trader base token account")]
     #[account(5, writable, name = "quote_account", desc = "Trader quote token account")]
     #[account(6, writable, name = "base_vault", desc = "Base vault PDA, seeds are [b'vault', market_address, base_mint_address]")]
@@ -150,10 +153,10 @@ pub enum PhoenixInstruction {
     #[account(8, name = "token_program", desc = "Token program")]
     WithdrawFunds = 12,
 
-    #[account(0, writable, name = "market", desc = "This account holds the market state")]
-    #[account(1, writable, signer, name = "trader")]
-    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
-    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(0, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(1, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(2, writable, name = "market", desc = "This account holds the market state")]
+    #[account(3, writable, signer, name = "trader")]
     #[account(4, name = "seat")]
     #[account(5, writable, name = "base_account", desc = "Trader base token account")]
     #[account(6, writable, name = "quote_account", desc = "Trader quote token account")]
@@ -162,21 +165,23 @@ pub enum PhoenixInstruction {
     #[account(9, name = "token_program", desc = "Token program")]
     DepositFunds = 13,
 
-    #[account(0, writable, signer, name = "payer")]
-    #[account(1, writable, name = "market")]
-    #[account(2, writable, name = "seat")]
-    #[account(3, name = "system_program", desc = "System program")]
+    #[account(0, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(1, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(2, writable, name = "market", desc = "This account holds the market state")]
+    #[account(3, writable, signer, name = "payer")]
+    #[account(4, writable, name = "seat")]
+    #[account(5, name = "system_program", desc = "System program")]
     RequestSeat = 14,
 
     #[account(0, signer, name = "log_authority", desc = "Log authority")]
     Log = 15,
 
     /// Place multiple post only orders on the book.
-    /// These orders can either be set to be rejected or amended if they cross the book.
-    #[account(0, writable, name = "market", desc = "This account holds the market state")]
-    #[account(1, writable, signer, name = "trader")]
-    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
-    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
+    /// Similar to single post only orders, these can either be set to be rejected or amended to top of book if they cross.
+    #[account(0, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(1, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(2, writable, name = "market", desc = "This account holds the market state")]
+    #[account(3, writable, signer, name = "trader")]
     #[account(4, name = "seat")]
     #[account(5, writable, name = "base_account", desc = "Trader base token account")]
     #[account(6, writable, name = "quote_account", desc = "Trader quote token account")]
@@ -186,11 +191,11 @@ pub enum PhoenixInstruction {
     PlaceMultiplePostOnlyOrders = 16,
         
     /// Place multiple post only orders on the book using only deposited funds.
-    /// These orders can either be set to be rejected or amended if they cross the book.
-    #[account(0, writable, name = "market", desc = "This account holds the market state")]
-    #[account(1, writable, signer, name = "trader")]
-    #[account(2, name = "log_authority", desc = "Phoenix log authority")]
-    #[account(3, name = "phoenix_program", desc = "Phoenix program")]
+    /// Similar to single post only orders, these can either be set to be rejected or amended to top of book if they cross.
+    #[account(0, name = "phoenix_program", desc = "Phoenix program")]
+    #[account(1, name = "log_authority", desc = "Phoenix log authority")]
+    #[account(2, writable, name = "market", desc = "This account holds the market state")]
+    #[account(3, writable, signer, name = "trader")]
     #[account(4, name = "seat")]
     PlaceMultiplePostOnlyOrdersWithFreeFunds = 17,
 }
@@ -338,10 +343,10 @@ pub fn create_new_order_instruction_with_custom_token_accounts(
         Instruction {
             program_id: crate::id(),
             accounts: vec![
+                AccountMeta::new_readonly(crate::id(), false),
+                AccountMeta::new_readonly(phoenix_log_authority::id(), false),
                 AccountMeta::new(*market, false),
                 AccountMeta::new(*trader, true),
-                AccountMeta::new_readonly(phoenix_log_authority::id(), false),
-                AccountMeta::new_readonly(crate::id(), false),
                 AccountMeta::new(*base_account, false),
                 AccountMeta::new(*quote_account, false),
                 AccountMeta::new(base_vault, false),
@@ -359,10 +364,10 @@ pub fn create_new_order_instruction_with_custom_token_accounts(
         Instruction {
             program_id: crate::id(),
             accounts: vec![
+                AccountMeta::new_readonly(crate::id(), false),
+                AccountMeta::new_readonly(phoenix_log_authority::id(), false),
                 AccountMeta::new(*market, false),
                 AccountMeta::new(*trader, true),
-                AccountMeta::new_readonly(phoenix_log_authority::id(), false),
-                AccountMeta::new_readonly(crate::id(), false),
                 AccountMeta::new_readonly(seat, false),
                 AccountMeta::new(*base_account, false),
                 AccountMeta::new(*quote_account, false),
@@ -384,24 +389,14 @@ pub fn create_new_order_with_free_funds_instruction(
     trader: &Pubkey,
     order_type: &OrderPacket,
 ) -> Instruction {
-    create_new_order_instruction_with_free_funds_with_custom_token_accounts(
-        market, trader, order_type,
-    )
-}
-
-pub fn create_new_order_instruction_with_free_funds_with_custom_token_accounts(
-    market: &Pubkey,
-    trader: &Pubkey,
-    order_type: &OrderPacket,
-) -> Instruction {
     let (seat, _) = get_seat_address(market, trader);
     Instruction {
         program_id: crate::id(),
         accounts: vec![
+            AccountMeta::new_readonly(crate::id(), false),
+            AccountMeta::new_readonly(phoenix_log_authority::id(), false),
             AccountMeta::new(*market, false),
             AccountMeta::new(*trader, true),
-            AccountMeta::new_readonly(phoenix_log_authority::id(), false),
-            AccountMeta::new_readonly(crate::id(), false),
             AccountMeta::new_readonly(seat, false),
         ],
         data: [
@@ -416,6 +411,83 @@ pub fn create_new_order_instruction_with_free_funds_with_custom_token_accounts(
     }
 }
 
+pub fn create_new_multiple_order_instruction(
+    market: &Pubkey,
+    trader: &Pubkey,
+    base: &Pubkey,
+    quote: &Pubkey,
+    multiple_order_packet: &MultipleOrderPacket,
+) -> Instruction {
+    let base_account = get_associated_token_address(trader, base);
+    let quote_account = get_associated_token_address(trader, quote);
+    create_new_multiple_order_instruction_with_custom_token_accounts(
+        market,
+        trader,
+        &base_account,
+        &quote_account,
+        base,
+        quote,
+        multiple_order_packet,
+    )
+}
+
+pub fn create_new_multiple_order_instruction_with_custom_token_accounts(
+    market: &Pubkey,
+    trader: &Pubkey,
+    base_account: &Pubkey,
+    quote_account: &Pubkey,
+    base: &Pubkey,
+    quote: &Pubkey,
+    multiple_order_packet: &MultipleOrderPacket,
+) -> Instruction {
+    let (base_vault, _) = get_vault_address(market, base);
+    let (quote_vault, _) = get_vault_address(market, quote);
+    let (seat, _) = get_seat_address(market, trader);
+    Instruction {
+        program_id: crate::id(),
+        accounts: vec![
+            AccountMeta::new_readonly(crate::id(), false),
+            AccountMeta::new_readonly(phoenix_log_authority::id(), false),
+            AccountMeta::new(*market, false),
+            AccountMeta::new(*trader, true),
+            AccountMeta::new_readonly(seat, false),
+            AccountMeta::new(*base_account, false),
+            AccountMeta::new(*quote_account, false),
+            AccountMeta::new(base_vault, false),
+            AccountMeta::new(quote_vault, false),
+            AccountMeta::new_readonly(spl_token::id(), false),
+        ],
+        data: [
+            PhoenixInstruction::PlaceMultiplePostOnlyOrders.to_vec(),
+            multiple_order_packet.try_to_vec().unwrap(),
+        ]
+        .concat(),
+    }
+}
+
+pub fn create_new_multiple_order_with_free_funds_instruction(
+    market: &Pubkey,
+    trader: &Pubkey,
+    multiple_order_packet: &MultipleOrderPacket,
+) -> Instruction {
+    let (seat, _) = get_seat_address(market, trader);
+    Instruction {
+        program_id: crate::id(),
+        accounts: vec![
+            AccountMeta::new_readonly(crate::id(), false),
+            AccountMeta::new_readonly(phoenix_log_authority::id(), false),
+            AccountMeta::new(*market, false),
+            AccountMeta::new(*trader, true),
+            AccountMeta::new_readonly(seat, false),
+        ],
+        data: [
+            PhoenixInstruction::PlaceMultiplePostOnlyOrdersWithFreeFunds.to_vec(),
+            multiple_order_packet.try_to_vec().unwrap(),
+        ]
+        .concat(),
+    }
+}
+
 pub fn create_cancel_all_order_with_free_funds_instruction(
     market: &Pubkey,
     trader: &Pubkey,
@@ -423,10 +495,10 @@ pub fn create_cancel_all_order_with_free_funds_instruction(
     Instruction {
         program_id: crate::id(),
         accounts: vec![
+            AccountMeta::new_readonly(crate::id(), false),
+            AccountMeta::new_readonly(phoenix_log_authority::id(), false),
             AccountMeta::new(*market, false),
             AccountMeta::new(*trader, true),
-            AccountMeta::new_readonly(phoenix_log_authority::id(), false),
-            AccountMeta::new_readonly(crate::id(), false),
         ],
         data: PhoenixInstruction::CancelAllOrdersWithFreeFunds.to_vec(),
     }
@@ -440,10 +512,10 @@ pub fn create_cancel_up_to_with_free_funds_instruction(
     Instruction {
         program_id: crate::id(),
         accounts: vec![
+            AccountMeta::new_readonly(crate::id(), false),
+            AccountMeta::new_readonly(phoenix_log_authority::id(), false),
             AccountMeta::new(*market, false),
             AccountMeta::new(*trader, true),
-            AccountMeta::new_readonly(phoenix_log_authority::id(), false),
-            AccountMeta::new_readonly(crate::id(), false),
         ],
         data: [
             PhoenixInstruction::CancelUpToWithFreeFunds.to_vec(),
@@ -461,10 +533,10 @@ pub fn create_cancel_multiple_orders_by_id_with_free_funds_instruction(
     Instruction {
         program_id: crate::id(),
         accounts: vec![
+            AccountMeta::new_readonly(crate::id(), false),
+            AccountMeta::new_readonly(phoenix_log_authority::id(), false),
             AccountMeta::new(*market, false),
             AccountMeta::new(*trader, true),
-            AccountMeta::new_readonly(phoenix_log_authority::id(), false),
-            AccountMeta::new_readonly(crate::id(), false),
         ],
         data: [
             PhoenixInstruction::CancelMultipleOrdersByIdWithFreeFunds.to_vec(),
@@ -482,10 +554,10 @@ pub fn create_reduce_order_with_free_funds_instruction(
     Instruction {
         program_id: crate::id(),
         accounts: vec![
+            AccountMeta::new_readonly(crate::id(), false),
+            AccountMeta::new_readonly(phoenix_log_authority::id(), false),
             AccountMeta::new(*market, false),
             AccountMeta::new(*trader, true),
-            AccountMeta::new_readonly(phoenix_log_authority::id(), false),
-            AccountMeta::new_readonly(crate::id(), false),
         ],
         data: [
             PhoenixInstruction::ReduceOrderWithFreeFunds.to_vec(),
@@ -534,10 +606,10 @@ pub fn create_deposit_funds_instruction_with_custom_token_accounts(
     Instruction {
         program_id: crate::id(),
         accounts: vec![
+            AccountMeta::new_readonly(crate::id(), false),
+            AccountMeta::new_readonly(phoenix_log_authority::id(), false),
             AccountMeta::new(*market, false),
             AccountMeta::new(*trader, true),
-            AccountMeta::new_readonly(phoenix_log_authority::id(), false),
-            AccountMeta::new_readonly(crate::id(), false),
             AccountMeta::new(*seat, false),
             AccountMeta::new(*base_account, false),
             AccountMeta::new(*quote_account, false),
@@ -569,17 +641,17 @@ fn _phoenix_instruction_template<T: BorshSerialize>(
     Instruction {
         program_id: crate::id(),
         accounts: vec![
+            AccountMeta::new_readonly(crate::id(), false),
+            AccountMeta::new_readonly(phoenix_log_authority::id(), false),
             AccountMeta::new(*market, false),
             AccountMeta::new(*trader, true),
-            AccountMeta::new_readonly(phoenix_log_authority::id(), false),
-            AccountMeta::new_readonly(crate::id(), false),
             AccountMeta::new(*base_account, false),
             AccountMeta::new(*quote_account, false),
             AccountMeta::new(base_vault, false),
             AccountMeta::new(quote_vault, false),
             AccountMeta::new_readonly(spl_token::id(), false),
         ],
-        data: [ix_id.try_to_vec().unwrap(), ix_data].concat(),
+        data: [[ix_id as u8].to_vec(), ix_data].concat(),
     }
 }
 
@@ -597,17 +669,17 @@ fn _phoenix_instruction_template_no_param(
     Instruction {
         program_id: crate::id(),
         accounts: vec![
+            AccountMeta::new_readonly(crate::id(), false),
+            AccountMeta::new_readonly(phoenix_log_authority::id(), false),
             AccountMeta::new(*market, false),
             AccountMeta::new(*trader, true),
-            AccountMeta::new_readonly(phoenix_log_authority::id(), false),
-            AccountMeta::new_readonly(crate::id(), false),
             AccountMeta::new(*base_account, false),
             AccountMeta::new(*quote_account, false),
             AccountMeta::new(base_vault, false),
             AccountMeta::new(quote_vault, false),
             AccountMeta::new_readonly(spl_token::id(), false),
         ],
-        data: ix_id.try_to_vec().unwrap(),
+        data: [ix_id as u8].to_vec(),
     }
 }
 
@@ -862,90 +934,13 @@ pub fn create_request_seat_instruction(payer: &Pubkey, market: &Pubkey) -> Instr
     Instruction {
         program_id: crate::id(),
         accounts: vec![
-            AccountMeta::new(*payer, true),
+            AccountMeta::new_readonly(crate::id(), false),
+            AccountMeta::new_readonly(phoenix_log_authority::id(), false),
             AccountMeta::new(*market, false),
+            AccountMeta::new(*payer, true),
             AccountMeta::new(seat, false),
             AccountMeta::new_readonly(system_program::id(), false),
-            AccountMeta::new_readonly(phoenix_log_authority::id(), false),
-            AccountMeta::new_readonly(crate::id(), false),
         ],
         data: PhoenixInstruction::RequestSeat.to_vec(),
-    }
-}
-
-pub fn create_new_multiple_order_instruction(
-    market: &Pubkey,
-    trader: &Pubkey,
-    base: &Pubkey,
-    quote: &Pubkey,
-    multiple_order_packet: &MultipleOrderPacket,
-) -> Instruction {
-    let base_account = get_associated_token_address(trader, base);
-    let quote_account = get_associated_token_address(trader, quote);
-    create_new_multiple_order_instruction_with_custom_token_accounts(
-        market,
-        trader,
-        &base_account,
-        &quote_account,
-        base,
-        quote,
-        multiple_order_packet,
-    )
-}
-
-pub fn create_new_multiple_order_instruction_with_custom_token_accounts(
-    market: &Pubkey,
-    trader: &Pubkey,
-    base_account: &Pubkey,
-    quote_account: &Pubkey,
-    base: &Pubkey,
-    quote: &Pubkey,
-    multiple_order_packet: &MultipleOrderPacket,
-) -> Instruction {
-    let (base_vault, _) = get_vault_address(market, base);
-    let (quote_vault, _) = get_vault_address(market, quote);
-    let (seat, _) = get_seat_address(market, trader);
-    Instruction {
-        program_id: crate::id(),
-        accounts: vec![
-            AccountMeta::new(*market, false),
-            AccountMeta::new(*trader, true),
-            AccountMeta::new_readonly(phoenix_log_authority::id(), false),
-            AccountMeta::new_readonly(crate::id(), false),
-            AccountMeta::new_readonly(seat, false),
-            AccountMeta::new(*base_account, false),
-            AccountMeta::new(*quote_account, false),
-            AccountMeta::new(base_vault, false),
-            AccountMeta::new(quote_vault, false),
-            AccountMeta::new_readonly(spl_token::id(), false),
-        ],
-        data: [
-            PhoenixInstruction::PlaceMultiplePostOnlyOrders.to_vec(),
-            multiple_order_packet.try_to_vec().unwrap(),
-        ]
-        .concat(),
-    }
-}
-
-pub fn create_new_multiple_order_with_free_funds_instruction(
-    market: &Pubkey,
-    trader: &Pubkey,
-    multiple_order_packet: &MultipleOrderPacket,
-) -> Instruction {
-    let (seat, _) = get_seat_address(market, trader);
-    Instruction {
-        program_id: crate::id(),
-        accounts: vec![
-            AccountMeta::new(*market, false),
-            AccountMeta::new(*trader, true),
-            AccountMeta::new_readonly(phoenix_log_authority::id(), false),
-            AccountMeta::new_readonly(crate::id(), false),
-            AccountMeta::new_readonly(seat, false),
-        ],
-        data: [
-            PhoenixInstruction::PlaceMultiplePostOnlyOrdersWithFreeFunds.to_vec(),
-            multiple_order_packet.try_to_vec().unwrap(),
-        ]
-        .concat(),
     }
 }

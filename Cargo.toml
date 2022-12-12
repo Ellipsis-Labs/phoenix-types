@@ -24,3 +24,4 @@ pyo3 = { git = "https://github.com/PyO3/pyo3", rev = "1d20f2a", optional = true 
 solders-traits = { git = "https://github.com/kevinheavey/solders", rev = "ba153af", optional = true }
 solders-macros = { git = "https://github.com/kevinheavey/solders", rev = "ba153af", optional = true }
 serde = { version = "1.0.147", features = ["derive"] }
+num_enum = "^0.5.1"
