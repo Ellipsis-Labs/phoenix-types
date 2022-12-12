@@ -986,6 +986,7 @@ dependencies = [
  "bytemuck",
  "ellipsis-macros",
  "lib-sokoban",
+ "num_enum",
  "pyo3",
  "serde",
  "shank",
