@@ -128,6 +128,10 @@ pub trait Market {
 
     fn get_trader_state(&self, trader: &Pubkey) -> Option<&TraderState>;
 
+    fn get_trader_index(&self, trader_id: &Pubkey) -> Option<u32>; 
+
+    fn get_trader_id_from_index(&self, trader_index: u32) -> Pubkey;
+
     fn get_book(&self, side: Side) -> &dyn OrderedNodeAllocatorMap<FIFOOrderId, FIFORestingOrder>;
 }
 
@@ -255,6 +259,20 @@ impl<const BIDS_SIZE: usize, const ASKS_SIZE: usize, const NUM_SEATS: usize> Mar
     #[inline(always)]
     fn get_trader_state(&self, trader: &Pubkey) -> Option<&TraderState> {
         self.traders.get(trader)
+    }
+
+    #[inline(always)]
+    fn get_trader_index(&self, trader_id: &Pubkey) -> Option<u32> {
+        let addr = self.traders.get_addr(trader_id);
+        if addr == SENTINEL {
+            None
+        } else {
+            Some(addr)
+        }
+    }
+
+    fn get_trader_id_from_index(&self, trader_index: u32) -> Pubkey {
+        self.traders.get_node(trader_index).key
     }
 
     #[inline(always)]
